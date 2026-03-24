@@ -168,7 +168,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .oauth-btn:hover{background:#1ed760;}
 
 /* TOPBAR */
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:1px solid var(--border);background:var(--bg);gap:16px;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:1px solid var(--border);background:var(--bg);gap:16px;position:sticky;top:0;z-index:150;}
 .topbar-left{display:flex;align-items:center;gap:14px;min-width:0;flex:1;}
 .topbar-title-group{display:flex;flex-direction:column;min-width:0;}
 .topbar-title{font-family:'Syne',sans-serif;font-weight:700;font-size:clamp(1.3rem,2.5vw,2rem);letter-spacing:-1px;color:var(--text);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -433,18 +433,8 @@ html,body{height:100%;overflow-x:hidden;}
 [data-theme="dark"] .table-wrap{border-color:#2e2c22;}
 
 /* ══ EXPANDED PLAYER ══ */
-.player-bar{transition:height .35s cubic-bezier(.4,0,.2,1),left .25s,right .25s;}
-.player-bar.expanded{height:52vh;min-height:380px;align-items:stretch;padding:0;
-  background:linear-gradient(135deg,#1c1a2e 0%,#16213e 40%,#0f3460 100%)!important;
-  border-top:2px solid rgba(29,185,84,.4)!important;}
-.player-expand-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);cursor:pointer;font-size:.72rem;padding:4px 9px;border-radius:99px;font-family:"Space Grotesk",sans-serif;transition:all .15s;margin-left:auto;flex-shrink:0;}
-.player-expand-btn:hover{color:#fff;background:rgba(255,255,255,.2);}
-.player-bar.expanded .player-art{display:none;}
-.player-bar.expanded .player-info{display:none;}
-.player-bar.expanded .player-controls:not(.player-exp-controls){display:none;}
-.player-bar.expanded .player-right{display:none;}
-.player-exp-wrap{display:none;width:100%;height:100%;}
-.player-bar.expanded .player-exp-wrap{display:grid;grid-template-columns:1fr 1fr 1fr;}
+.player-bar{transition:left .25s,right .25s;}
+.player-exp-wrap{display:none;}
 .player-exp-art{overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.3);}
 .player-exp-art img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block;}
 .player-exp-art-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:5rem;opacity:.4;}
@@ -484,7 +474,7 @@ html,body{height:100%;overflow-x:hidden;}
 @keyframes factFadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 
 /* ══ QUEUE STATUS BAR ══ */
-#queue-status-bar{font-size:.76rem;color:var(--text2);font-weight:500;}
+#queue-status-bar{font-size:.76rem;color:var(--text2);font-weight:500;position:sticky;top:57px;z-index:149;}
 #queue-status-bar strong{color:var(--text);}
 [data-theme="dark"] #queue-status-bar{background:linear-gradient(90deg,rgba(29,185,84,.15),rgba(29,185,84,.06))!important;border-bottom-color:rgba(29,185,84,.25)!important;}
 
@@ -555,15 +545,28 @@ html,body{height:100%;overflow-x:hidden;}
   <!-- TOP BAR: mode switcher + close — always visible -->
   <div id="viz-ui" style="position:absolute;top:0;left:0;right:0;z-index:510;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:linear-gradient(to bottom,rgba(0,0,0,.75) 0%,transparent 100%);pointer-events:all;">
     <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;color:rgba(255,255,255,.4);letter-spacing:1px;text-transform:uppercase;">Visualizer</div>
-    <div style="display:flex;gap:4px;background:rgba(0,0,0,.5);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.12);border-radius:99px;padding:5px 8px;">
-      <button onclick="setVizMode(0)" id="vbtn-0" class="vbtn active">⬛ Matrix</button>
-      <button onclick="setVizMode(1)" id="vbtn-1" class="vbtn">🌀 Tunnel</button>
-      <button onclick="setVizMode(2)" id="vbtn-2" class="vbtn">✨ Stars</button>
-      <button onclick="setVizMode(3)" id="vbtn-3" class="vbtn">🌈 Plasma</button>
-      <button onclick="setVizMode(4)" id="vbtn-4" class="vbtn">🔷 Geo</button>
-      <button onclick="setVizMode(5)" id="vbtn-5" class="vbtn">〰️ Lissa</button>
+    <div style="display:flex;gap:4px;background:rgba(0,0,0,.55);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:5px 8px;flex-wrap:wrap;">
+      <button onclick="setVizMode(0)" id="vbtn-0" class="vbtn active">Matrix</button>
+      <button onclick="setVizMode(1)" id="vbtn-1" class="vbtn">Wormhole</button>
+      <button onclick="setVizMode(2)" id="vbtn-2" class="vbtn">Warp</button>
+      <button onclick="setVizMode(3)" id="vbtn-3" class="vbtn">Plasma</button>
+      <button onclick="setVizMode(4)" id="vbtn-4" class="vbtn">Particles</button>
+      <button onclick="setVizMode(5)" id="vbtn-5" class="vbtn">Fractal</button>
+      <button onclick="setVizMode(6)" id="vbtn-6" class="vbtn">DNA</button>
+      <button onclick="setVizMode(7)" id="vbtn-7" class="vbtn">Fire</button>
+      <button onclick="setVizMode(8)" id="vbtn-8" class="vbtn">Mix</button>
     </div>
-    <button onclick="toggleVisualizer()" style="background:rgba(255,255,255,.1);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.8);border-radius:99px;padding:7px 16px;cursor:pointer;font-size:.78rem;font-family:'Space Grotesk',sans-serif;font-weight:600;transition:all .15s;" onmouseover="this.style.background='rgba(255,255,255,.2)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">✕ Close</button>
+    <div style="display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.55);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:6px 12px;">
+      <span style="font-size:.65rem;color:rgba(255,255,255,.5);font-weight:600;">SPEED</span>
+      <input type="range" id="viz-speed" min="0.2" max="3" step="0.1" value="1" style="-webkit-appearance:none;width:70px;height:3px;border-radius:99px;background:rgba(255,255,255,.2);outline:none;cursor:pointer;" oninput="vizSpeed=parseFloat(this.value)" />
+      <button onclick="toggleVizLyrics()" id="viz-lyrics-toggle" style="font-size:.65rem;font-weight:600;padding:3px 8px;border-radius:99px;border:1px solid rgba(255,255,255,.2);background:none;color:rgba(255,255,255,.6);cursor:pointer;font-family:'Space Grotesk',sans-serif;">Lyrics</button>
+    </div>
+    <button onclick="toggleVisualizer()" style="background:rgba(255,255,255,.1);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.8);border-radius:99px;padding:7px 14px;cursor:pointer;font-size:.78rem;font-family:'Space Grotesk',sans-serif;font-weight:600;">✕</button>
+  </div>
+
+  <!-- LYRICS OVERLAY -->
+  <div id="viz-lyrics-overlay" style="display:none;position:absolute;inset:0;z-index:508;pointer-events:none;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+    <div id="viz-lyric-line" style="font-family:'Syne',sans-serif;font-size:clamp(1.4rem,3vw,2.8rem);font-weight:700;color:#fff;text-align:center;text-shadow:0 0 40px rgba(255,255,255,.8),0 0 80px rgba(100,200,255,.4);max-width:80%;line-height:1.3;transition:all .4s ease;padding:0 40px;"></div>
   </div>
 
   <!-- BOTTOM BAR: track info + playback controls — always visible -->
@@ -769,51 +772,7 @@ html,body{height:100%;overflow-x:hidden;}
 
 <!-- PLAYER BAR -->
 <div class="player-bar" id="player-bar">
-  <div class="player-art" id="player-art" onclick="toggleExpandPlayer()" style="cursor:pointer;" title="Expand player"><div class="player-art-ph">🎵</div></div>
-  <!-- Expanded 3-col layout -->
-  <div class="player-exp-wrap" id="player-exp-wrap">
-    <div class="player-exp-art" id="player-exp-art" onclick="toggleExpandPlayer()" style="cursor:pointer;" title="Collapse">
-      <div class="player-exp-art-ph" id="player-exp-art-ph">🎵</div>
-    </div>
-    <div class="player-exp-right">
-      <div class="player-exp-name" id="exp-track">—</div>
-      <div class="player-exp-artist" id="exp-artist"></div>
-      <div class="player-exp-fields" id="exp-fields"></div>
-      <div class="player-exp-tags" id="exp-tags" style="display:none;"></div>
-      <div class="player-exp-links" id="exp-links" style="display:none;"></div>
-      <div class="player-controls player-exp-controls">
-        <div class="player-btns">
-          <button class="pb" onclick="spPrev()">⏮</button>
-          <button class="pb play" id="pb-play-exp" onclick="spTogglePlay()">▶</button>
-          <button class="pb" onclick="spNext()">⏭</button>
-          <button class="pb" onclick="spShuffle()" id="pb-shuffle-exp">⇌</button>
-        </div>
-        <div class="player-progress">
-          <span class="prog-time" id="prog-pos-exp">0:00</span>
-          <div class="prog-track" onclick="spSeek(event)" style="flex:1;"><div class="prog-fill" id="prog-fill-exp" style="width:0%"></div></div>
-          <span class="prog-time" id="prog-dur-exp">0:00</span>
-        </div>
-        <div class="vol-wrap" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;">
-          <button style="background:none;border:none;cursor:pointer;font-size:1rem;color:rgba(255,255,255,.6);" onclick="spMute()">🔊</button>
-          <input type="range" class="vol-slider" min="0" max="100" value="80" oninput="spSetVolume(this.value)" style="width:130px;" />
-          <span style="font-size:.72rem;color:rgba(255,255,255,.3);margin-left:6px;" id="player-pos-exp"></span>
-        </div>
-      </div>
-    </div>
-    <div class="player-exp-facts" id="exp-facts-panel">
-      <div class="player-exp-facts-header">
-        <div class="player-exp-facts-title">🎬 Did You Know?</div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div class="player-exp-fact-dots" id="exp-fact-dots"></div>
-          <div class="player-exp-fact-controls">
-            <button class="player-exp-fact-ctrl" onclick="factPrev()">‹</button>
-            <button class="player-exp-fact-ctrl" id="fact-pause-btn" onclick="toggleFactPause()">⏸</button>
-            <button class="player-exp-fact-ctrl" onclick="factNext()">›</button>
-          </div>
-        </div>
-      </div>
-      <div class="player-exp-fact" id="exp-fact">Facts load with your Anthropic key...</div>
-    </div>
+  <div class="player-art" id="player-art" onclick="showNPPanel()" style="cursor:pointer;" title="Show Now Playing"><div class="player-art-ph">🎵</div></div>
   </div>
   <div class="player-info">
     <div class="player-track" id="player-track">—</div>
@@ -838,7 +797,7 @@ html,body{height:100%;overflow-x:hidden;}
       <button class="vol-icon" onclick="spMute()" id="vol-icon">🔊</button>
       <input type="range" class="vol-slider" id="vol-slider" min="0" max="100" value="80" oninput="spSetVolume(this.value)" />
     </div>
-    <button class="player-expand-btn" id="expand-btn" onclick="toggleExpandPlayer()" title="Expand player">⬆</button>
+
   </div>
 </div>
 
@@ -863,7 +822,7 @@ html,body{height:100%;overflow-x:hidden;}
       <div class="np-tabs">
         <button class="np-tab active" onclick="switchNPTab('info')" id="nptab-info">Info</button>
         <button class="np-tab" onclick="switchNPTab('lyrics')" id="nptab-lyrics">Lyrics</button>
-        <button class="np-tab" onclick="switchNPTab('video')" id="nptab-video">Video</button>
+        <button class="np-tab" onclick="switchNPTab('reco')" id="nptab-reco">Picks</button>
       </div>
       <button onclick="hideNPPanel()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:2px 6px;border-radius:5px;" title="Hide panel">✕</button>
     </div>
@@ -876,15 +835,16 @@ html,body{height:100%;overflow-x:hidden;}
       <div class="np-track-artist" id="np-track-artist"></div>
     </div>
     <div class="np-fields" id="np-fields"></div>
-    <div class="np-section" id="np-fact-section" style="display:none;">
-      <div class="np-section-title">🎬 Did You Know?</div>
-      <div class="np-fact" id="np-fact-text">Loading...</div>
-      <div style="display:flex;gap:6px;margin-top:8px;align-items:center;" id="np-fact-controls">
-        <button onclick="factPrev()" style="background:var(--surface2);border:1px solid var(--border);border-radius:99px;color:var(--text2);cursor:pointer;font-size:.7rem;padding:3px 8px;font-family:'Space Grotesk',sans-serif;">‹</button>
-        <button onclick="toggleFactPause()" id="np-fact-pause" style="background:var(--surface2);border:1px solid var(--border);border-radius:99px;color:var(--text2);cursor:pointer;font-size:.7rem;padding:3px 8px;font-family:'Space Grotesk',sans-serif;">⏸</button>
-        <button onclick="factNext()" style="background:var(--surface2);border:1px solid var(--border);border-radius:99px;color:var(--text2);cursor:pointer;font-size:.7rem;padding:3px 8px;font-family:'Space Grotesk',sans-serif;">›</button>
-        <div id="np-fact-dots" style="display:flex;gap:4px;"></div>
+    <div id="np-fact-section" style="display:none;border-top:1px solid var(--border);padding:8px 14px;flex-shrink:0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <div style="font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);">🎬 Did You Know?</div>
+        <div style="display:flex;gap:4px;align-items:center;">
+          <div id="np-fact-dots" style="display:flex;gap:3px;"></div>
+          <button onclick="factPrev()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;padding:0 3px;">‹</button>
+          <button onclick="factNext()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;padding:0 3px;">›</button>
+        </div>
       </div>
+      <div id="np-fact-text" style="font-size:.72rem;color:var(--text2);line-height:1.5;max-height:56px;overflow:hidden;position:relative;">Loading...</div>
     </div>
   </div>
   <!-- Lyrics tab -->
@@ -894,21 +854,19 @@ html,body{height:100%;overflow-x:hidden;}
       <div style="display:flex;gap:6px;align-items:center;">
         <button id="np-lyrics-sync-btn" onclick="toggleLyricsSync()" style="font-size:.65rem;font-weight:700;padding:3px 8px;border-radius:99px;border:1.5px solid var(--sp);color:var(--sp);background:none;cursor:pointer;font-family:'Space Grotesk',sans-serif;">⏱ Sync</button>
         <a id="np-lyrics-link" href="#" target="_blank" style="font-size:.65rem;color:var(--blue);text-decoration:none;display:none;">Genius ↗</a>
+        <button onclick="toggleLyricsExpand()" id="np-lyrics-expand-btn" title="Expand lyrics" style="font-size:.7rem;background:none;border:1px solid var(--border);border-radius:99px;color:var(--muted);cursor:pointer;padding:2px 7px;font-family:'Space Grotesk',sans-serif;">⤢</button>
       </div>
     </div>
-    <div class="np-lyrics-body" id="np-lyrics-body" style="padding:12px 14px;">Open a track to see lyrics.</div>
+    <div class="np-lyrics-body" id="np-lyrics-body" style="padding:12px 14px;flex:1;overflow-y:auto;">Open a track to see lyrics.</div>
   </div>
-  <!-- Video tab -->
-  <div id="np-body-video" class="np-body" style="display:none;">
-    <div style="padding:10px 14px;border-bottom:1px solid var(--border);">
-      <div style="font-size:.7rem;color:var(--muted);" id="np-video-label">No track selected</div>
+  <!-- Recommendations / Picks tab -->
+  <div id="np-body-reco" class="np-body" style="display:none;">
+    <div style="padding:8px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-size:.7rem;color:var(--muted);">Based on current track</div>
+      <button onclick="loadRecommendations()" style="font-size:.65rem;font-weight:600;padding:3px 8px;border-radius:99px;border:1px solid var(--border);background:none;color:var(--text2);cursor:pointer;font-family:'Space Grotesk',sans-serif;">↻ Refresh</button>
     </div>
-    <div style="padding:12px 14px;">
-      <div class="np-yt-wrap" id="np-yt-wrap" style="display:none;"></div>
-      <div id="np-yt-placeholder" style="font-size:.75rem;color:var(--muted);text-align:center;padding:24px 0;">
-        <div style="font-size:1.5rem;margin-bottom:8px;">▶</div>
-        <div>Play a track to load its music video</div>
-      </div>
+    <div id="np-reco-list" style="padding:8px 0;">
+      <div style="font-size:.75rem;color:var(--muted);text-align:center;padding:24px 14px;">Play a track to get recommendations</div>
     </div>
   </div>
 </div>
@@ -1639,7 +1597,7 @@ function updateQueueStatus(label,count,filters){
   _queueContext={label:label,count:count};
   var el=document.getElementById("queue-status-bar");
   if(!el)return;
-  var shuffleIcon=spShuffled?"⇌ Shuffling":"▶ In Order";
+  var shuffleIcon=spShuffled?"⇌ Shuffling":"▶ Playing in order";
   var parts=[shuffleIcon,"<strong>"+esc(label)+"</strong>",count+" tracks"];
   if(filters){if(filters.gender)parts.push("Gender: "+filters.gender);if(filters.genre)parts.push("Genre: "+filters.genre);if(filters.year)parts.push("Year: "+filters.year);}
   el.innerHTML=parts.join(" &middot; ");
@@ -2354,13 +2312,8 @@ function openCorrectedModal(){openGMWithPool('corrected','corrected','#22c97a','
 var playerExpanded=false, _lastFactTrack='', _factRotateInterval=null, _currentFacts=[], _factIdx=0, _factPaused=false;
 
 function toggleExpandPlayer(){
-  playerExpanded=!playerExpanded;
-  var bar=document.getElementById('player-bar');
-  var btn=document.getElementById('expand-btn');
-  bar.classList.toggle('expanded',playerExpanded);
-  if(btn)btn.textContent=playerExpanded?'⬇':'⬆';
-  if(playerExpanded)updateExpandedPlayer();
-  setTimeout(function(){if(yearChartInst)yearChartInst.resize();},380);
+  // Expanded player replaced by NP panel
+  if(npPanelOpen)hideNPPanel();else showNPPanel();
 }
 
 function updateExpandedPlayer(){
@@ -2403,19 +2356,14 @@ async function fetchTrackFacts(track){
 
 function startFactRotation(){
   stopFactRotation();_factPaused=false;_factIdx=0;
-  var dotsEl=document.getElementById('exp-fact-dots');
-  if(dotsEl)dotsEl.innerHTML=_currentFacts.map(function(_,i){return '<div class="player-exp-fact-dot'+(i===0?' active':'')+'" onclick="showFact('+i+')"></div>';}).join('');
   showFact(0);
+  var npFS=document.getElementById('np-fact-section');if(npFS)npFS.style.display='block';
   _factRotateInterval=setInterval(function(){if(!_factPaused){_factIdx=(_factIdx+1)%_currentFacts.length;showFact(_factIdx);}},20000);
 }
 function stopFactRotation(){if(_factRotateInterval){clearInterval(_factRotateInterval);_factRotateInterval=null;}}
 function showFact(idx){
   _factIdx=idx;
-  var el=document.getElementById('exp-fact');
-  if(el){el.style.animation='none';void el.offsetWidth;el.style.animation='factFadeIn .5s ease';if(_currentFacts[idx])el.textContent=_currentFacts[idx];}
-  var dotsEl=document.getElementById('exp-fact-dots');
-  if(dotsEl)dotsEl.querySelectorAll('.player-exp-fact-dot').forEach(function(d,i){d.classList.toggle('active',i===idx);});
-  // Also update NP panel
+  // Update NP panel (primary fact display)
   updateNPFact();
 }
 function factPrev(){if(_currentFacts.length)showFact((_factIdx-1+_currentFacts.length)%_currentFacts.length);}
@@ -2555,16 +2503,16 @@ function hideNPPanel(){
   setTimeout(function(){if(yearChartInst)yearChartInst.resize();},300);
 }
 function switchNPTab(tab){
-  _npTab=tab;
-  ['info','lyrics','video'].forEach(function(t){
+  var prev=_npTab; _npTab=tab;
+  ['info','lyrics','reco'].forEach(function(t){
     var btn=document.getElementById('nptab-'+t);
     var body=document.getElementById('np-body-'+t);
     if(btn)btn.classList.toggle('active',t===tab);
     if(body){body.style.display=t===tab?'block':'none';}
   });
   if(tab==='lyrics'){lyricsVisible=true;syncNPLyrics();if(spPlaying)startLyricsSync();}
-  if(tab==='video'){loadNPVideo();}
-  if(tab==='info'&&_npTab!=='info'){lyricsVisible=false;stopLyricsSync();}
+  if(tab==='reco'){loadRecommendations();}
+  if(tab!=='lyrics'&&prev==='lyrics'){lyricsVisible=false;stopLyricsSync();}
 }
 
 function updateNPPanel(track){
@@ -2618,10 +2566,10 @@ function updateNPPanel(track){
     gl.href=gUrl;gl.style.display='inline';
   }
   // Reset video if track changed
-  if(_npYtLoaded!==track.name){_npYtLoaded='';document.getElementById('np-yt-wrap').style.display='none';document.getElementById('np-yt-placeholder').style.display='block';}
+  
   // Auto-load lyrics if on lyrics tab
   if(_npTab==='lyrics')syncNPLyrics();
-  if(_npTab==='video')loadNPVideo();
+  if(_npTab==='reco'){_recoTrack='';loadRecommendations();}
 }
 
 function updateNPFact(){
@@ -2663,85 +2611,138 @@ function loadNPVideo(){
   if(ph)ph.style.display='none';
 }
 
-// ══ VISUALIZER
-// ══ VISUALIZER (screensaver modes)
-var vizActive=false,vizAnim=null,vizMode=0,vizT=0;
-// Matrix state
-var matCols=[],matDrops=[];
-// Starfield state
-var stars=[];
-// Tunnel state
-var tunnelAngle=0;
-// Geo state
-var geoShapes=[];
-// Lissajous state
-var lissHistory=[];
+// ══ RECOMMENDATIONS
+var _recoTrack='',_recoSaved=[];
+async function loadRecommendations(){
+  var t=spCurrentTrackIdx>=0?spQueue[spCurrentTrackIdx]:null;
+  var list=document.getElementById('np-reco-list');
+  if(!list)return;
+  if(!t){list.innerHTML='<div style="font-size:.75rem;color:var(--muted);text-align:center;padding:24px 14px;">Play a track to get recommendations</div>';return;}
+  if(_recoTrack===t.spotifyUri&&list.children.length>1)return; // already loaded
+  _recoTrack=t.spotifyUri||t.name;
+  list.innerHTML='<div style="font-size:.75rem;color:var(--muted);text-align:center;padding:16px;">Loading recommendations...</div>';
+  var key=document.getElementById('sb-api-key').value.trim();
+  if(!key){list.innerHTML='<div style="font-size:.75rem;color:var(--muted);padding:14px;">Add your Anthropic key in Settings to get AI recommendations.</div>';return;}
+  try{
+    var context=allTracks.filter(function(x){return x.year&&x.mainGenre&&x.spotifyUri;}).slice(0,30).map(function(x){return x.name+' by '+x.artistName;}).join(', ');
+    var prompt='The user is listening to "'+t.name+'" by '+t.artistName+' ('+t.year+', '+t.mainGenre+', '+t.gender+').
+'
+      +'Their playlist includes: '+context+'.
+'
+      +'Recommend 6 popular songs from the same era ('+Math.max(1985,parseInt(t.year||1990)-4)+'-'+Math.min(2005,parseInt(t.year||1995)+4)+'), same general genre ('+t.mainGenre+'), similar vibe. '
+      +'Do NOT recommend songs already in their playlist.
+'
+      +'Return ONLY a JSON array of 6 objects: [{"title":"Song","artist":"Artist","year":1994,"reason":"One compelling sentence why"}]';
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:600,messages:[{role:'user',content:prompt}]})});
+    if(!resp.ok)throw new Error('API error');
+    var d=await resp.json();
+    var txt=d.content&&d.content[0]&&d.content[0].text||'[]';
+    var recos=JSON.parse(txt.replace(/```json|```/g,'').trim());
+    if(!Array.isArray(recos)||!recos.length)throw new Error('No recommendations');
+    list.innerHTML=recos.map(function(r,i){
+      var saved=_recoSaved.some(function(s){return s.title===r.title&&s.artist===r.artist;});
+      return '<div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:4px;" id="reco-'+i+'">'
+        +'<div style="display:flex;align-items:start;justify-content:space-between;gap:8px;">'
+          +'<div style="flex:1;min-width:0;">'
+            +'<div style="font-size:.8rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(r.title)+'</div>'
+            +'<div style="font-size:.7rem;color:var(--muted);">'+esc(r.artist)+' · '+r.year+'</div>'
+          +'</div>'
+          +'<button onclick="saveReco('+i+','+JSON.stringify(r).replace(/"/g,"'")+')" title="Save" style="background:none;border:1px solid var(--border);border-radius:99px;color:'+(saved?'var(--sp)':'var(--muted)')+';cursor:pointer;font-size:.65rem;padding:2px 7px;flex-shrink:0;font-family:'Space Grotesk',sans-serif;">'+(saved?'✓ Saved':'+ Save')+'</button>'
+        +'</div>'
+        +'<div style="font-size:.71rem;color:var(--text2);line-height:1.5;font-style:italic;">'+esc(r.reason)+'</div>'
+      +'</div>';
+    }).join('');
+  }catch(e){list.innerHTML='<div style="font-size:.75rem;color:var(--muted);padding:14px;">Could not load recommendations. Try again.</div>';console.warn(e);}
+}
+function saveReco(i,r){
+  if(typeof r==='string')try{r=JSON.parse(r.replace(/'/g,'"'));}catch(e){return;}
+  if(!_recoSaved.some(function(s){return s.title===r.title&&s.artist===r.artist;})){
+    _recoSaved.push(r);
+    var btn=document.querySelector('#reco-'+i+' button');
+    if(btn){btn.textContent='✓ Saved';btn.style.color='var(--sp)';}
+    // Toast
+    var toast=document.createElement('div');
+    toast.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1DB954;color:#000;font-family:Space Grotesk,sans-serif;font-size:.78rem;font-weight:700;padding:8px 18px;border-radius:99px;z-index:999;animation:slideUp .3s ease;';
+    toast.textContent='✓ '+r.title+' saved to list';
+    document.body.appendChild(toast);setTimeout(function(){toast.remove();},2500);
+  }
+}
+
+// ══ VISUALIZER (screensaver modes — trippy edition)
+var vizActive=false,vizAnim=null,vizMode=0,vizT=0,vizSpeed=1;
+var vizLyricsOn=false,_vizLyricLine=0;
+// Per-mode state
+var _mx={cols:0,drops:[]};
+var _st={stars:[]};
+var _wr={rings:[],angle:0};
+var _pa={particles:[],mouse:{x:0,y:0}};
+var _fr={pts:[],hue:0};
+var _dna={strand:0};
+var _fi={grid:null};
+var _mix={modeA:0,modeB:3,blend:0,dir:1};
+
+function toggleVizLyrics(){
+  vizLyricsOn=!vizLyricsOn;
+  var btn=document.getElementById('viz-lyrics-toggle');
+  var ov=document.getElementById('viz-lyrics-overlay');
+  if(btn){btn.style.background=vizLyricsOn?'rgba(255,255,255,.2)':'none';btn.style.color=vizLyricsOn?'#fff':'rgba(255,255,255,.6)';}
+  if(ov)ov.style.display=vizLyricsOn?'flex':'none';
+}
+function _updateVizLyric(){
+  if(!vizLyricsOn||!lyricsLines.length)return;
+  var el=document.getElementById('viz-lyric-line');if(!el)return;
+  var t=vizT*vizSpeed;
+  var idx=Math.floor((t/20)%lyricsLines.length);
+  var line=(lyricsLines[idx]||'').trim();
+  if(line&&line!==el.textContent){
+    el.style.opacity='0';el.style.transform='translateY(20px)';
+    setTimeout(function(){el.textContent=line;el.style.opacity='1';el.style.transform='translateY(0)';},200);
+  }
+  el.style.transition='opacity .4s ease,transform .4s ease';
+}
 
 function toggleVisualizer(){
   vizActive=!vizActive;
   var btn=document.getElementById('viz-sb-btn');
   var panel=document.getElementById('viz-panel');
   if(btn)btn.querySelector('.sb-icon').textContent=vizActive?'🎚️':'📊';
-  if(!vizActive){
-    panel.style.display='none';
-    if(vizAnim){cancelAnimationFrame(vizAnim);vizAnim=null;}
-    return;
-  }
+  if(!vizActive){panel.style.display='none';if(vizAnim){cancelAnimationFrame(vizAnim);vizAnim=null;}document.removeEventListener('keydown',_vizKeyHandler);return;}
   panel.style.display='block';
   var canvas=document.getElementById('viz-canvas');
-  function resizeCanvas(){if(canvas){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}}
+  function resizeCanvas(){if(canvas){canvas.width=window.innerWidth;canvas.height=window.innerHeight;initVizMode();}}
   resizeCanvas();
   window.addEventListener('resize',resizeCanvas);
-  // Update now-playing display
-  _syncVizTrack();
-  initVizMode();
+  panel.addEventListener('mousemove',function(e){_pa.mouse.x=e.clientX;_pa.mouse.y=e.clientY;});
+  _syncVizTrack();initVizMode();
   if(vizAnim)cancelAnimationFrame(vizAnim);
   vizLoop();
-  // ESC to close
   document.addEventListener('keydown',_vizKeyHandler);
 }
-
 function _vizKeyHandler(e){if(e.key==='Escape'&&vizActive)toggleVisualizer();}
-
-function _syncVizTrack(){
-  var tn=document.getElementById('viz-track-name');
-  var ta=document.getElementById('viz-track-artist');
-  var t=spQueue&&spCurrentTrackIdx>=0?spQueue[spCurrentTrackIdx]:null;
-  if(tn)tn.textContent=t?t.name:'';
-  if(ta)ta.textContent=t?t.artistName:'';
-  // Sync album art from player-art
-  var artEl=document.getElementById('player-art');
-  var vizArt=document.getElementById('viz-art');
-  if(vizArt&&artEl){var img=artEl.querySelector('img');vizArt.innerHTML=img?'<img src="'+img.src+'" style="width:100%;height:100%;object-fit:cover;display:block;" />':'';}
-  // Sync play button
-  var vpb=document.getElementById('viz-pb-play');
-  if(vpb)vpb.textContent=spPlaying?'⏸':'▶';
-}
 
 function setVizMode(m){
   vizMode=m;
   document.querySelectorAll('.vbtn').forEach(function(b,i){b.classList.toggle('active',i===m);});
-  initVizMode();
+  vizT=0;initVizMode();
 }
-
 function initVizMode(){
-  var canvas=document.getElementById('viz-canvas');
-  if(!canvas)return;
+  var canvas=document.getElementById('viz-canvas');if(!canvas)return;
   var W=canvas.width,H=canvas.height;
-  if(vizMode===0){ // Matrix
-    var cols=Math.floor(W/16);
-    matCols=cols;matDrops=[];
-    for(var i=0;i<cols;i++)matDrops[i]=Math.floor(Math.random()*H/16);
-  } else if(vizMode===2){ // Stars
-    stars=[];
-    for(var i=0;i<300;i++)stars.push({x:(Math.random()-0.5)*W*3,y:(Math.random()-0.5)*H*3,z:Math.random()*W,pz:0});
-  } else if(vizMode===4){ // Geometry
-    geoShapes=[];
-    for(var i=0;i<12;i++)geoShapes.push({x:Math.random()*W,y:Math.random()*H,r:20+Math.random()*60,sides:3+Math.floor(Math.random()*5),speed:0.3+Math.random()*0.8,rot:Math.random()*Math.PI*2,rotSpeed:(Math.random()-0.5)*0.02,hue:Math.random()*360,vx:(Math.random()-0.5)*1.5,vy:(Math.random()-0.5)*1.5});
-  } else if(vizMode===5){ // Lissajous
-    lissHistory=[];
-  }
-  vizT=0;
+  // Matrix
+  _mx.cols=Math.floor(W/14);_mx.drops=[];
+  for(var i=0;i<_mx.cols;i++)_mx.drops[i]=Math.random()*H/14|0;
+  // Stars warp
+  _st.stars=[];for(var i=0;i<500;i++)_st.stars.push({x:(Math.random()-.5)*W*3,y:(Math.random()-.5)*H*3,z:Math.random()*W,pz:0,hue:Math.random()*60+200});
+  // Wormhole rings
+  _wr.rings=[];_wr.angle=0;for(var i=0;i<40;i++)_wr.rings.push({z:i/40,hue:(i*9)%360});
+  // Particles
+  _pa.particles=[];for(var i=0;i<200;i++)_pa.particles.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*2,vy:(Math.random()-.5)*2,life:Math.random(),hue:Math.random()*360,size:1+Math.random()*3,trail:[]});
+  // DNA
+  _dna.strand=0;
+  // Fire grid
+  _fi.grid=new Float32Array(Math.ceil(W/4)*Math.ceil(H/4));
+  // Mix
+  _mix.blend=0;_mix.dir=1;
 }
 
 function vizLoop(){
@@ -2750,146 +2751,299 @@ function vizLoop(){
   if(!canvas){vizAnim=requestAnimationFrame(vizLoop);return;}
   var ctx=canvas.getContext('2d');
   var W=canvas.width,H=canvas.height;
-  vizT+=0.016;
-  if(vizMode===0) drawMatrix(ctx,W,H);
-  else if(vizMode===1) drawTunnel(ctx,W,H);
-  else if(vizMode===2) drawStars(ctx,W,H);
-  else if(vizMode===3) drawPlasma(ctx,W,H);
-  else if(vizMode===4) drawGeo(ctx,W,H);
-  else if(vizMode===5) drawLissa(ctx,W,H);
+  var spd=vizSpeed;
+  vizT+=0.016*spd;
+  if(vizMode===0)drawMatrix(ctx,W,H,spd);
+  else if(vizMode===1)drawWormhole(ctx,W,H,spd);
+  else if(vizMode===2)drawWarp(ctx,W,H,spd);
+  else if(vizMode===3)drawPlasma(ctx,W,H);
+  else if(vizMode===4)drawParticles(ctx,W,H,spd);
+  else if(vizMode===5)drawFractal(ctx,W,H,spd);
+  else if(vizMode===6)drawDNA(ctx,W,H,spd);
+  else if(vizMode===7)drawFire(ctx,W,H,spd);
+  else if(vizMode===8)drawMix(ctx,W,H,spd);
+  _updateVizLyric();
   vizAnim=requestAnimationFrame(vizLoop);
 }
 
-// ── MODE 0: MATRIX
-var _matChars='アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ@#$%&*';
-function drawMatrix(ctx,W,H){
-  ctx.fillStyle='rgba(0,0,0,0.05)';ctx.fillRect(0,0,W,H);
-  ctx.fillStyle='#0f0';ctx.font='bold 14px monospace';
-  for(var i=0;i<matCols;i++){
-    var ch=_matChars[Math.floor(Math.random()*_matChars.length)];
-    var x=i*16,y=matDrops[i]*16;
-    ctx.fillStyle='rgba(180,255,180,0.9)';ctx.fillText(ch,x,y);
-    ctx.fillStyle='#0f0';
-    if(y>H&&Math.random()>0.975)matDrops[i]=0;else matDrops[i]++;
+// ── 0: MATRIX — denser, colorful glitches
+var _mc='アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789!@#$%^&*ABCDEFGHIJKLMNOPQRSTUVWXYZｦｧｨｩｪｫｬｭｮｯ';
+function drawMatrix(ctx,W,H,spd){
+  ctx.fillStyle='rgba(0,0,0,0.04)';ctx.fillRect(0,0,W,H);
+  var t=vizT;
+  for(var i=0;i<_mx.cols;i++){
+    var ch=_mc[Math.random()*_mc.length|0];
+    var x=i*14,y=_mx.drops[i]*14;
+    // Vary color: mostly green, occasional cyan/white/purple glitch
+    var r=Math.random();
+    if(r>.98)ctx.fillStyle='rgba(255,255,255,0.95)'; // bright flash
+    else if(r>.95)ctx.fillStyle='rgba(0,255,255,0.9)'; // cyan
+    else if(r>.93)ctx.fillStyle='rgba(180,0,255,0.8)'; // purple
+    else ctx.fillStyle='hsl('+(120+Math.sin(t+i)*.15*360)+',100%,'+(45+Math.sin(t*0.3+i)*20)+'%)';
+    ctx.font='bold 13px monospace';
+    ctx.fillText(ch,x,y);
+    // Bright head
+    ctx.fillStyle='rgba(200,255,200,0.9)';
+    ctx.fillText(_mc[Math.random()*_mc.length|0],x,y);
+    if(y>H&&Math.random()>.965)_mx.drops[i]=0;else _mx.drops[i]+=spd;
   }
 }
 
-// ── MODE 1: TUNNEL
-function drawTunnel(ctx,W,H){
-  ctx.fillStyle='rgba(0,0,0,0.18)';ctx.fillRect(0,0,W,H);
+// ── 1: WORMHOLE — rotating vortex of color rings that pull you in
+function drawWormhole(ctx,W,H,spd){
+  ctx.fillStyle='rgba(0,0,0,0.15)';ctx.fillRect(0,0,W,H);
   var cx=W/2,cy=H/2;
-  tunnelAngle+=0.012;
-  var layers=24;
-  for(var i=layers;i>=0;i--){
-    var t2=i/layers;
-    var r=20+(1-t2)*Math.min(W,H)*0.72;
-    var hue=(tunnelAngle*60+i*15)%360;
-    var alpha=0.12+t2*0.25;
-    ctx.save();ctx.translate(cx,cy);ctx.rotate(tunnelAngle*(i%2===0?1:-1)*0.4+i*0.08);
-    var sides=4+Math.floor(i%3);
+  _wr.angle+=0.008*spd;
+  var t=vizT;
+  for(var i=_wr.rings.length-1;i>=0;i--){
+    var ring=_wr.rings[i];
+    ring.z=(ring.z+0.005*spd)%1;
+    var scale=Math.pow(ring.z,2);
+    var r=20+scale*Math.min(W,H)*0.65;
+    ring.hue=(ring.hue+0.5*spd)%360;
+    var alpha=0.06+scale*0.4;
+    var sides=5+Math.floor(ring.z*4);
+    ctx.save();ctx.translate(cx,cy);
+    ctx.rotate(_wr.angle*(i%2===0?1:-1)+ring.z*Math.PI*0.5);
     ctx.beginPath();
     for(var s=0;s<=sides;s++){var a=s/sides*Math.PI*2;ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}
     ctx.closePath();
-    ctx.strokeStyle='hsla('+hue+',100%,65%,'+alpha+')';
-    ctx.lineWidth=1.5;ctx.stroke();
+    var lw=1+scale*4;
+    ctx.strokeStyle='hsla('+ring.hue+',100%,65%,'+alpha+')';
+    ctx.lineWidth=lw;ctx.stroke();
+    // Inner glow
+    if(scale>.6){ctx.strokeStyle='hsla('+((ring.hue+60)%360)+',100%,85%,'+(alpha*.5)+')';ctx.lineWidth=lw*.3;ctx.stroke();}
     ctx.restore();
   }
+  // Central bright spot
+  var grd=ctx.createRadialGradient(cx,cy,0,cx,cy,60);
+  grd.addColorStop(0,'hsla('+(_wr.angle*50%360)+',100%,80%,0.4)');
+  grd.addColorStop(1,'transparent');
+  ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);
 }
 
-// ── MODE 2: STARFIELD
-function drawStars(ctx,W,H){
-  ctx.fillStyle='rgba(0,0,0,0.25)';ctx.fillRect(0,0,W,H);
-  var cx=W/2,cy=H/2,speed=4;
-  for(var i=0;i<stars.length;i++){
-    var s=stars[i];s.pz=s.z;s.z-=speed;
-    if(s.z<=0){s.x=(Math.random()-0.5)*W*3;s.y=(Math.random()-0.5)*H*3;s.z=W;s.pz=W;}
+// ── 2: WARP SPEED — hyper-realistic starfield with color trails
+function drawWarp(ctx,W,H,spd){
+  ctx.fillStyle='rgba(0,0,0,0.2)';ctx.fillRect(0,0,W,H);
+  var cx=W/2,cy=H/2,speed=6*spd;
+  var t=vizT;
+  for(var i=0;i<_st.stars.length;i++){
+    var s=_st.stars[i];s.pz=s.z;s.z-=speed;
+    if(s.z<=0){s.x=(Math.random()-.5)*W*3;s.y=(Math.random()-.5)*H*3;s.z=W;s.pz=W;s.hue=Math.random()*60+200+Math.random()*60;}
     var sx=cx+s.x/s.z*W,sy=cy+s.y/s.z*W;
     var px=cx+s.x/s.pz*W,py=cy+s.y/s.pz*W;
-    var size=Math.max(0.5,(1-s.z/W)*3.5);
-    var bright=Math.floor((1-s.z/W)*255);
-    ctx.strokeStyle='rgb('+bright+','+bright+',255)';
+    var dist=Math.sqrt((sx-cx)*(sx-cx)+(sy-cy)*(sy-cy));
+    var bright=Math.min(255,dist*.8)|0;
+    var size=Math.max(.5,(1-s.z/W)*4*spd);
+    var alpha=Math.min(1,dist/100);
+    ctx.strokeStyle='hsla('+s.hue+',100%,'+Math.min(90,50+dist/8)+'%,'+alpha+')';
     ctx.lineWidth=size;ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(sx,sy);ctx.stroke();
+  }
+  // Speed lines radiating from center
+  if(spd>1.5){
+    for(var i=0;i<8;i++){
+      var a=i/8*Math.PI*2+t*.1;
+      var len=60+Math.sin(t*2+i)*30;
+      ctx.strokeStyle='rgba(255,255,255,'+(0.05*spd)+')';
+      ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(a)*len,cy+Math.sin(a)*len);ctx.stroke();
+    }
   }
 }
 
-// ── MODE 3: PLASMA
+// ── 3: PLASMA — richer multi-layer with more colors
 function drawPlasma(ctx,W,H){
-  var img=ctx.createImageData(W,H);
-  var d=img.data,t=vizT;
-  var scale=0.006;
-  for(var y=0;y<H;y+=2){
-    for(var x=0;x<W;x+=2){
-      var v=Math.sin(x*scale+t)+Math.sin(y*scale+t*1.3)+Math.sin((x+y)*scale*0.7+t*0.8)+Math.sin(Math.sqrt(x*x+y*y)*scale*0.5+t*0.6);
-      v=(v+4)/8;
-      var r=Math.floor(Math.sin(v*Math.PI*2)*127+128);
-      var g=Math.floor(Math.sin(v*Math.PI*2+2.094)*127+128);
-      var b=Math.floor(Math.sin(v*Math.PI*2+4.189)*127+128);
-      for(var dy=0;dy<2&&y+dy<H;dy++){for(var dx=0;dx<2&&x+dx<W;dx++){var idx=((y+dy)*W+(x+dx))*4;d[idx]=r;d[idx+1]=g;d[idx+2]=b;d[idx+3]=255;}}
-    }
-  }
+  var img=ctx.createImageData(W,H);var d=img.data,t=vizT;
+  var s=0.007;
+  for(var y=0;y<H;y+=2){for(var x=0;x<W;x+=2){
+    var v=Math.sin(x*s+t)*Math.sin(y*s*1.3+t*.7)
+      +Math.sin((x+y)*s*.5+t*.9)
+      +Math.sin(Math.sqrt(x*x+y*y)*s*.4+t*.5)
+      +Math.cos(x*s*.8-t*.3)*Math.cos(y*s*.6+t*.4);
+    v=(v+4)/8;
+    // More vivid color mapping
+    var hue=(v*720+t*30)%360;
+    var r=Math.sin(hue/60*Math.PI)*127+128|0;
+    var g=Math.sin((hue/60-2)*Math.PI)*127+128|0;
+    var b=Math.sin((hue/60-4)*Math.PI)*127+128|0;
+    for(var dy=0;dy<2&&y+dy<H;dy++){for(var dx=0;dx<2&&x+dx<W;dx++){var idx=((y+dy)*W+(x+dx))*4;d[idx]=r;d[idx+1]=g;d[idx+2]=b;d[idx+3]=255;}}
+  }}
   ctx.putImageData(img,0,0);
 }
 
-// ── MODE 4: GEOMETRY
-function drawGeo(ctx,W,H){
-  ctx.fillStyle='rgba(0,0,0,0.12)';ctx.fillRect(0,0,W,H);
-  for(var i=0;i<geoShapes.length;i++){
-    var s=geoShapes[i];
-    s.rot+=s.rotSpeed;s.x+=s.vx;s.y+=s.vy;
-    if(s.x<-s.r||s.x>W+s.r)s.vx*=-1;
-    if(s.y<-s.r||s.y>H+s.r)s.vy*=-1;
-    s.hue=(s.hue+0.4)%360;
-    ctx.save();ctx.translate(s.x,s.y);ctx.rotate(s.rot);
-    ctx.beginPath();
-    for(var k=0;k<s.sides;k++){var a=k/s.sides*Math.PI*2-Math.PI/2;ctx.lineTo(Math.cos(a)*s.r,Math.sin(a)*s.r);}
-    ctx.closePath();
-    ctx.strokeStyle='hsla('+s.hue+',100%,65%,0.85)';
-    ctx.fillStyle='hsla('+s.hue+',100%,50%,0.07)';
-    ctx.lineWidth=1.5;ctx.stroke();ctx.fill();
-    // Inner shape
-    ctx.beginPath();
-    for(var k=0;k<s.sides;k++){var a=k/s.sides*Math.PI*2-Math.PI/2;ctx.lineTo(Math.cos(a)*s.r*0.5,Math.sin(a)*s.r*0.5);}
-    ctx.closePath();
-    ctx.strokeStyle='hsla('+(s.hue+60)+',100%,75%,0.5)';ctx.lineWidth=1;ctx.stroke();
-    ctx.restore();
+// ── 4: PARTICLES — gravity + mouse interaction + color trails
+function drawParticles(ctx,W,H,spd){
+  ctx.fillStyle='rgba(0,0,0,0.1)';ctx.fillRect(0,0,W,H);
+  var t=vizT,mx=_pa.mouse.x||W/2,my=_pa.mouse.y||H/2;
+  for(var i=0;i<_pa.particles.length;i++){
+    var p=_pa.particles[i];
+    // Gravity toward mouse
+    var dx=mx-p.x,dy=my-p.y,dist=Math.sqrt(dx*dx+dy*dy)+1;
+    var force=Math.min(2,80/dist)*spd;
+    p.vx+=(dx/dist)*force*.15;p.vy+=(dy/dist)*force*.15;
+    // Orbit + noise
+    p.vx+=Math.sin(t*.5+i*.1)*.12*spd;p.vy+=Math.cos(t*.7+i*.13)*.12*spd;
+    // Damping
+    p.vx*=0.97;p.vy*=0.97;
+    p.x+=p.vx*spd;p.y+=p.vy*spd;
+    p.hue=(p.hue+0.5*spd)%360;
+    p.life=(p.life+0.003*spd)%1;
+    // Wrap
+    if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+    // Trail
+    p.trail.push({x:p.x,y:p.y});if(p.trail.length>12)p.trail.shift();
+    // Draw trail
+    if(p.trail.length>1){
+      ctx.beginPath();ctx.moveTo(p.trail[0].x,p.trail[0].y);
+      for(var j=1;j<p.trail.length;j++){ctx.lineTo(p.trail[j].x,p.trail[j].y);}
+      ctx.strokeStyle='hsla('+p.hue+',100%,65%,'+(0.3*(p.trail.length/12))+')';
+      ctx.lineWidth=p.size*.8;ctx.stroke();
+    }
+    // Glow dot
+    var grd=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.size*3);
+    grd.addColorStop(0,'hsla('+p.hue+',100%,80%,.8)');
+    grd.addColorStop(1,'transparent');
+    ctx.fillStyle=grd;ctx.beginPath();ctx.arc(p.x,p.y,p.size*3,0,Math.PI*2);ctx.fill();
   }
-  // Draw connecting lines between nearby shapes
-  for(var i=0;i<geoShapes.length;i++){
-    for(var j=i+1;j<geoShapes.length;j++){
-      var dx=geoShapes[i].x-geoShapes[j].x,dy=geoShapes[i].y-geoShapes[j].y;
-      var dist=Math.sqrt(dx*dx+dy*dy);
-      if(dist<200){
-        ctx.strokeStyle='rgba(255,255,255,'+(0.12*(1-dist/200))+')';
-        ctx.lineWidth=0.5;ctx.beginPath();ctx.moveTo(geoShapes[i].x,geoShapes[i].y);ctx.lineTo(geoShapes[j].x,geoShapes[j].y);ctx.stroke();
-      }
+  // Connection lines between nearby particles
+  for(var i=0;i<_pa.particles.length;i+=3){
+    for(var j=i+3;j<_pa.particles.length;j+=3){
+      var dx=_pa.particles[i].x-_pa.particles[j].x,dy=_pa.particles[i].y-_pa.particles[j].y;
+      var d=Math.sqrt(dx*dx+dy*dy);
+      if(d<80){ctx.strokeStyle='rgba(255,255,255,'+(0.15*(1-d/80))+')';ctx.lineWidth=.5;ctx.beginPath();ctx.moveTo(_pa.particles[i].x,_pa.particles[i].y);ctx.lineTo(_pa.particles[j].x,_pa.particles[j].y);ctx.stroke();}
     }
   }
 }
 
-// ── MODE 5: LISSAJOUS
-function drawLissa(ctx,W,H){
-  ctx.fillStyle='rgba(0,0,0,0.04)';ctx.fillRect(0,0,W,H);
-  var cx=W/2,cy=H/2,rx=W*0.38,ry=H*0.38;
-  var a=3,b=2+Math.sin(vizT*0.07),delta=vizT*0.4;
-  var x=cx+rx*Math.sin(a*vizT+delta);
-  var y=cy+ry*Math.sin(b*vizT);
-  var hue=(vizT*30)%360;
-  lissHistory.push({x:x,y:y,h:hue});
-  if(lissHistory.length>900)lissHistory.shift();
-  for(var i=1;i<lissHistory.length;i++){
-    var alpha=i/lissHistory.length;
-    ctx.strokeStyle='hsla('+lissHistory[i].h+',100%,65%,'+alpha+')';
-    ctx.lineWidth=1.5*alpha;
-    ctx.beginPath();ctx.moveTo(lissHistory[i-1].x,lissHistory[i-1].y);ctx.lineTo(lissHistory[i].x,lissHistory[i].y);ctx.stroke();
+// ── 5: FRACTAL — spinning recursive geometry that morphs
+function drawFractal(ctx,W,H,spd){
+  ctx.fillStyle='rgba(0,0,0,0.12)';ctx.fillRect(0,0,W,H);
+  var cx=W/2,cy=H/2,t=vizT;
+  _fr.hue=(_fr.hue+0.8*spd)%360;
+  function branch(x,y,len,angle,depth,hue){
+    if(depth<0||len<2)return;
+    var x2=x+Math.cos(angle)*len,y2=y+Math.sin(angle)*len;
+    ctx.strokeStyle='hsla('+hue+',100%,'+(40+depth*8)+'%,'+(0.15+depth*.1)+')';
+    ctx.lineWidth=depth*.8;
+    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x2,y2);ctx.stroke();
+    var spread=0.45+Math.sin(t*.4)*0.2;
+    var shrink=0.67+Math.sin(t*.3+depth)*.08;
+    branch(x2,y2,len*shrink,angle-spread,depth-1,(hue+25)%360);
+    branch(x2,y2,len*shrink,angle+spread,depth-1,(hue-25+360)%360);
   }
-  // Glowing dot at head
-  var grd=ctx.createRadialGradient(x,y,0,x,y,10);
-  grd.addColorStop(0,'hsla('+hue+',100%,90%,1)');
-  grd.addColorStop(1,'hsla('+hue+',100%,65%,0)');
-  ctx.fillStyle=grd;ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);ctx.fill();
+  var rot=t*.15;
+  var startLen=Math.min(W,H)*0.22;
+  for(var i=0;i<5;i++){
+    var a=i/5*Math.PI*2+rot;
+    branch(cx+Math.cos(a)*60,cy+Math.sin(a)*60,startLen,a,6,(_fr.hue+i*72)%360);
+  }
 }
 
-function _syncVizPanel(){/* no-op, now fullscreen */}
+// ── 6: DNA — double helix rotating in 3D
+function drawDNA(ctx,W,H,spd){
+  ctx.fillStyle='rgba(0,0,0,0.18)';ctx.fillRect(0,0,W,H);
+  var t=vizT,cx=W/2,cy=H/2;
+  var pts=120;
+  for(var i=0;i<pts;i++){
+    var progress=i/pts;
+    var z=Math.sin(t*.5)*50;
+    var angle=progress*Math.PI*8+t*.8*spd;
+    var waveY=progress*H-H/2;
+    var amp=Math.min(W*.3,200);
+    // Strand A
+    var ax=cx+Math.cos(angle)*amp,ay=cy+waveY;
+    // Strand B
+    var bx=cx+Math.cos(angle+Math.PI)*amp,by=cy+waveY;
+    var depth=(Math.cos(angle)+1)/2;
+    var hueA=(t*40+i*3)%360;
+    var hueB=(hueA+180)%360;
+    // Nodes
+    var ns=4+depth*8;
+    if(i%5===0){
+      var g1=ctx.createRadialGradient(ax,ay,0,ax,ay,ns*1.5);
+      g1.addColorStop(0,'hsla('+hueA+',100%,75%,'+(0.4+depth*.5)+')');g1.addColorStop(1,'transparent');
+      ctx.fillStyle=g1;ctx.beginPath();ctx.arc(ax,ay,ns*1.5,0,Math.PI*2);ctx.fill();
+      var g2=ctx.createRadialGradient(bx,by,0,bx,by,ns*1.5);
+      g2.addColorStop(0,'hsla('+hueB+',100%,75%,'+(0.4+(1-depth)*.5)+')');g2.addColorStop(1,'transparent');
+      ctx.fillStyle=g2;ctx.beginPath();ctx.arc(bx,by,ns*1.5,0,Math.PI*2);ctx.fill();
+      // Rung connecting strands
+      if(i%10===0){
+        var rungAlpha=0.3+Math.sin(angle)*0.2;
+        ctx.strokeStyle='hsla('+((hueA+hueB)/2)+',70%,70%,'+rungAlpha+')';
+        ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();
+      }
+    }
+    // Backbone line segments
+    if(i>0){
+      var pa_x=cx+Math.cos(((i-1)/pts)*Math.PI*8+t*.8*spd)*amp;
+      var pa_y=cy+(i-1)/pts*H-H/2;
+      ctx.strokeStyle='hsla('+hueA+',100%,60%,0.5)';ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(pa_x,pa_y);ctx.lineTo(ax,ay);ctx.stroke();
+      var pb_x=cx+Math.cos(((i-1)/pts)*Math.PI*8+Math.PI+t*.8*spd)*amp;
+      var pb_y=cy+(i-1)/pts*H-H/2;
+      ctx.strokeStyle='hsla('+hueB+',100%,60%,0.5)';
+      ctx.beginPath();ctx.moveTo(pb_x,pb_y);ctx.lineTo(bx,by);ctx.stroke();
+    }
+  }
+}
+
+// ── 7: FIRE — realistic cellular fire simulation
+function drawFire(ctx,W,H,spd){
+  var cols=Math.ceil(W/4),rows=Math.ceil(H/4);
+  if(!_fi.grid||_fi.grid.length!==cols*rows)_fi.grid=new Float32Array(cols*rows);
+  var g=_fi.grid;
+  // Seed bottom row with random fire
+  for(var x=0;x<cols;x++){g[(rows-1)*cols+x]=Math.random()>.3?1+Math.random()*.5:0;}
+  // Propagate upward with cooling
+  for(var y=rows-2;y>=0;y--){for(var x=0;x<cols;x++){
+    var sum=g[(y+1)*cols+x]+g[(y+1)*cols+Math.max(0,x-1)]+g[(y+1)*cols+Math.min(cols-1,x+1)]+(y+2<rows?g[(y+2)*cols+x]:0);
+    g[y*cols+x]=Math.max(0,(sum/4.1)-(.015+Math.random()*.015)*spd);
+  }}
+  // Draw
+  var img=ctx.createImageData(W,H);var d=img.data;
+  for(var y=0;y<H;y+=4){for(var x=0;x<W;x+=4){
+    var v=g[Math.min(rows-1,y/4|0)*cols+Math.min(cols-1,x/4|0)];
+    var r=Math.min(255,v*255*2)|0;
+    var gr=Math.min(255,Math.max(0,(v-.5)*255*2))|0;
+    var b=Math.min(255,Math.max(0,(v-.8)*255*5))|0;
+    for(var dy=0;dy<4&&y+dy<H;dy++){for(var dx=0;dx<4&&x+dx<W;dx++){var idx=((y+dy)*W+(x+dx))*4;d[idx]=r;d[idx+1]=gr;d[idx+2]=b;d[idx+3]=255;}}
+  }}
+  ctx.putImageData(img,0,0);
+}
+
+// ── 8: MIX — blends between two modes dynamically
+function drawMix(ctx,W,H,spd){
+  // Slowly cycle between modes
+  _mix.blend+=0.003*spd*_mix.dir;
+  if(_mix.blend>=1){_mix.blend=1;_mix.dir=-1;_mix.modeA=_mix.modeB;_mix.modeB=(_mix.modeB+1+Math.floor(Math.random()*6))%8;}
+  if(_mix.blend<=0){_mix.blend=0;_mix.dir=1;}
+  // Draw mode A at full opacity
+  var savedMode=vizMode;
+  vizMode=_mix.modeA;
+  if(vizMode===0)drawMatrix(ctx,W,H,spd);
+  else if(vizMode===1)drawWormhole(ctx,W,H,spd);
+  else if(vizMode===2)drawWarp(ctx,W,H,spd);
+  else if(vizMode===3)drawPlasma(ctx,W,H);
+  else if(vizMode===4)drawParticles(ctx,W,H,spd);
+  else if(vizMode===5)drawFractal(ctx,W,H,spd);
+  else if(vizMode===6)drawDNA(ctx,W,H,spd);
+  else if(vizMode===7)drawFire(ctx,W,H,spd);
+  // Overlay mode B with blend alpha
+  ctx.globalAlpha=_mix.blend;
+  vizMode=_mix.modeB;
+  if(vizMode===0)drawMatrix(ctx,W,H,spd);
+  else if(vizMode===1)drawWormhole(ctx,W,H,spd);
+  else if(vizMode===2)drawWarp(ctx,W,H,spd);
+  else if(vizMode===3)drawPlasma(ctx,W,H);
+  else if(vizMode===4)drawParticles(ctx,W,H,spd);
+  else if(vizMode===5)drawFractal(ctx,W,H,spd);
+  else if(vizMode===6)drawDNA(ctx,W,H,spd);
+  else if(vizMode===7)drawFire(ctx,W,H,spd);
+  ctx.globalAlpha=1;
+  vizMode=savedMode;
+}
+
+function _syncVizPanel(){/* no-op, fullscreen */}
+
 
 // ══ INIT
 (async function(){
