@@ -1092,7 +1092,7 @@ function savePlaylist(){
   const name=document.getElementById('save-name-input').value.trim();
   if(!name){alert('Please enter a name.');return;}
   currentPlaylistName=name;
-  document.getElementById('playlist-name').textContent=name;
+  safeSet('playlist-name',name);
   const saved=getSaved();
   // Check if overwriting existing
   const existIdx=saved.findIndex(p=>p.name===name);
@@ -1173,7 +1173,7 @@ async function lookupOriginalDates(){
   if(updated>0){
     document.getElementById('lookup-note').textContent=`✓ ${updated} of ${total} corrected`;
     status.textContent=`Done — ${updated} corrected. <a href="#" onclick="openCorrectedModal();return false;" style="color:var(--green);font-weight:600">View changes</a>`;
-    document.getElementById('lookup-status').innerHTML=status.textContent;
+    var ls2=document.getElementById('lookup-status');if(ls2)ls2.innerHTML=status?status.textContent:'';
     autoSaveCurrentPlaylist();
     updateAllKPIs();
   } else {
@@ -1708,6 +1708,9 @@ function mapGenreFromTags(tags) {
 
 // Show correct CTA on welcome screen based on Spotify connection
 function updateWelcomeScreen() {
+  var dashboard = document.getElementById('dashboard');
+  var dashVisible = dashboard && dashboard.style.display !== 'none' && dashboard.style.display !== '';
+  if (dashVisible) return; // dashboard is showing — don't touch welcome screen
   var stepConnect = document.getElementById('step-connect');
   var stepImport = document.getElementById('step-import');
   if (!stepConnect || !stepImport) return;
@@ -2236,8 +2239,8 @@ function initDashboard(name){
   document.getElementById('oauth-screen').classList.remove('active');
   document.getElementById('dashboard').style.display='block';
   document.getElementById('topbar').style.display='flex';
-  document.getElementById('topbar-title').textContent=name;
-  document.getElementById('topbar-title').style.display='';
+  safeSet('topbar-title',name);
+  var ttEl=safeGet('topbar-title');if(ttEl)ttEl.style.display='';
   document.getElementById('topbar-title-inp').style.display='none';
   // Show playlist art in topbar if available
   var saved=getSaved();
@@ -2259,17 +2262,19 @@ function showDashboard(){
 }
 
 // ══ KPI
+function safeGet(id){return document.getElementById(id);}
+function safeSet(id,val){var el=safeGet(id);if(el)el.textContent=val;}
 function updateAllKPIs(){
   var years=allTracks.map(function(t){return t.year;}).filter(Boolean);
   var minY=years.length?Math.min.apply(null,years):null,maxY=years.length?Math.max.apply(null,years):null;
   var uA=new Set(allTracks.map(function(t){return t.artistName;})).size;
   var allG=allTracks.reduce(function(a,t){return a.concat(t.genres);},[]);
-  document.getElementById('kpi-total').textContent=allTracks.length;
-  document.getElementById('kpi-artists').textContent=uA;
-  document.getElementById('kpi-span').textContent=minY&&maxY?(minY===maxY?minY:minY+'–'+maxY):'—';
-  document.getElementById('kpi-genres').textContent=new Set(allG).size||'—';
-  document.getElementById('kpi-coverage').textContent=new Set(years).size;
-  document.getElementById('topbar-meta').textContent=allTracks.length+' tracks · '+uA+' artists · '+new Set(allG).size+' unique genres';
+  safeSet('kpi-total',allTracks.length);
+  safeSet('kpi-artists',uA);
+  safeSet('kpi-span',minY&&maxY?(minY===maxY?minY:minY+'–'+maxY):'—');
+  safeSet('kpi-genres',new Set(allG).size||'—');
+  safeSet('kpi-coverage',new Set(years).size);
+  safeSet('topbar-meta',allTracks.length+' tracks · '+uA+' artists · '+new Set(allG).size+' unique genres');
   populateCFSelects();
   renderGenderBars();renderGenreTiles();renderYearChart();
   setTimeout(renderRiverFlow,50);
