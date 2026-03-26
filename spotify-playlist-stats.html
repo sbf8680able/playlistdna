@@ -350,10 +350,10 @@ html,body{height:100%;overflow-x:hidden;}
 .main-content.lyrics-open{margin-right:320px;}
 #dashboard{display:block;}
 .dash-body{padding:8px 16px 0;}
-#view-river,#view-nexus,#view-songs{display:none;}
+#view-grid,#view-nexus,#view-songs{display:none;}
 
 
-#view-river.active,#view-nexus.active,#view-songs.active{display:block!important;}
+#view-grid.active,#view-nexus.active,#view-songs.active{display:block!important;}
 @keyframes flowA{to{stroke-dashoffset:-80}}
 @keyframes flowB{to{stroke-dashoffset:-50}}
 @keyframes flowC{to{stroke-dashoffset:-120}}
@@ -529,9 +529,22 @@ html,body{height:100%;overflow-x:hidden;}
 #dashboard{display:flex;flex-direction:column;height:calc(100vh - 0px);}
 .dash-body{flex:1;display:flex;flex-direction:column;padding:8px 16px 0;min-height:0;}
 
-#tab-river,#tab-nexus{height:100%;}
-#river-panel{height:100%;}
-#river-svg,#nexus-svg{height:100%;min-height:460px;}
+#view-grid,#view-nexus{}
+#nexus-svg{height:calc(100vh - 80px);min-height:460px;}
+
+/* ── Grid View ── */
+.grid-table{border-collapse:separate;border-spacing:4px;width:100%;}
+.grid-th{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:4px 8px;text-align:left;white-space:nowrap;}
+.grid-th-genre{font-size:.7rem;font-weight:700;color:var(--text2);padding:6px 10px;text-align:left;white-space:nowrap;max-width:110px;overflow:hidden;text-overflow:ellipsis;}
+.grid-cell{border-radius:8px;padding:0;text-align:center;cursor:pointer;transition:transform .12s,filter .12s;position:relative;vertical-align:middle;}
+.grid-cell:hover{transform:scale(1.06);filter:brightness(1.25);}
+.grid-cell-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;width:60px;height:52px;border-radius:8px;}
+.grid-bubble{border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#fff;transition:all .12s;flex-shrink:0;}
+.grid-cell-count{font-size:.6rem;color:rgba(255,255,255,.7);margin-top:2px;}
+.grid-cell.playing-cell .grid-cell-inner{animation:gridPulse 1.6s ease-in-out infinite;}
+@keyframes gridPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.5)}}
+.grid-yr-btn{font-size:.68rem;padding:3px 9px;border-radius:99px;border:1px solid var(--border);background:none;color:var(--text2);cursor:pointer;transition:all .12s;}
+.grid-yr-btn.active{border-color:var(--sp);background:rgba(29,185,84,.12);color:var(--sp);font-weight:700;}
 </style>
 </head>
 <body>
@@ -599,8 +612,8 @@ html,body{height:100%;overflow-x:hidden;}
     </div>
     <div class="sb-divider" id="sb-summary-divider" style="display:none;"></div>
     <div id="sb-views-section" class="sb-section" style="display:none;">Views</div>
-    <div class="sb-item sb-view-btn active" id="sb-btn-river" onclick="switchTab('river')" data-view="river" style="display:none;cursor:pointer;">
-      <span class="sb-icon">≋</span><span class="sb-label">River</span>
+    <div class="sb-item sb-view-btn active" id="sb-btn-grid" onclick="switchTab('grid')" data-view="grid" style="display:none;cursor:pointer;">
+      <span class="sb-icon">▦</span><span class="sb-label">Grid</span>
     </div>
     <div class="sb-item sb-view-btn" id="sb-btn-nexus" onclick="switchTab('nexus')" data-view="nexus" style="display:none;cursor:pointer;">
       <span class="sb-icon">🌐</span><span class="sb-label">Nexus</span>
@@ -760,15 +773,13 @@ html,body{height:100%;overflow-x:hidden;}
       <div id="gnf-cnt" style="display:none"></div>
       <div id="yf-cnt" style="display:none"></div>
       <!-- views controlled from sidebar nav -->
-      <div id="view-river" style="padding:0 0 12px;">
-        <div id="river-panel" style="position:relative;min-height:500px;">
-          <canvas id="river-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity .5s;"></canvas>
-          <svg id="river-svg" width="100%" viewBox="0 0 900 640" style="display:block;height:calc(100vh - 160px);min-height:500px;cursor:default;" preserveAspectRatio="xMidYMid meet"></svg>
-          <div id="river-legend" style="display:flex;gap:16px;flex-wrap:wrap;padding:8px 16px 0;font-size:11px;color:var(--text2);"></div>
-          <div id="river-selection" style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 16px 4px;min-height:34px;align-items:center;">
-            <span style="font-size:11px;color:var(--muted);">Shift+click to multi-select · click to play or explore</span>
-          </div>
+      <div id="view-grid" style="padding:12px 16px;overflow-y:auto;height:calc(100vh - 80px);">
+        <div id="grid-year-bar" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+          <span style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-right:4px;">Year</span>
+          <button onclick="gridFilterYear(null)" id="grid-yr-all" style="font-size:11px;padding:3px 10px;border-radius:99px;border:1px solid var(--sp);background:var(--sp);color:#000;font-weight:700;cursor:pointer;">All</button>
         </div>
+        <div id="grid-matrix" style="overflow-x:auto;"></div>
+        <div id="grid-playing-info" style="margin-top:12px;font-size:12px;color:var(--muted);min-height:20px;"></div>
       </div>
       <div id="view-nexus" style="padding:0 0 12px;">
         <svg id="nexus-svg" width="100%" viewBox="0 0 900 620" style="display:block;height:calc(100vh - 120px);min-height:500px;cursor:default;" preserveAspectRatio="xMidYMid meet"></svg>
@@ -2221,9 +2232,9 @@ function highlightPlayingTrack(track){
   document.querySelectorAll('#genre-tiles .genre-tile').forEach(function(tile){var oc=tile.getAttribute('onclick')||'';if(oc.indexOf(track.mainGenre)>=0)tile.classList.add('sp-active-tile');});
   updateYearBarOverlay(track);
   // Update River and Nexus if visible
-  var tabRiver=document.getElementById('view-river');
+  var tabRiver=document.getElementById('view-grid');
   var tabNexus=document.getElementById('view-nexus');
-  if(tabRiver&&tabRiver.classList.contains('active'))renderRiverFlow();
+  if(tabRiver&&tabRiver.classList.contains('active'))renderGrid();
   if(tabNexus&&tabNexus.classList.contains('active'))renderNexusWeb();
 }
 
@@ -2293,7 +2304,7 @@ function initDashboard(name){
   ['sb-views-section','sb-btn-river','sb-btn-nexus','sb-btn-songs','sb-views-divider'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.style.display='';
   });
-  switchTab('river');
+  switchTab('grid');
   if(wBtn)wBtn.style.display=wikiCount2<allTracks.length?'flex':'none';
   if(wGBtn)wGBtn.style.display=wikiCount2>0?'flex':'none';
   ['welcome-screen','loading-screen'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
@@ -2361,7 +2372,7 @@ function updateAllKPIs(){
   renderGenderBars();renderGenreTiles();renderYearChart();
   populateFilters();applyFilters();
   // Only re-render river/nexus if their tab is currently visible
-  if(document.getElementById('view-river')&&document.getElementById('view-river').classList.contains('active'))setTimeout(renderRiverFlow,50);
+  if(document.getElementById('view-grid')&&document.getElementById('view-grid').classList.contains('active'))setTimeout(renderGrid,50);
   // Refresh highlights after all charts have re-rendered
   setTimeout(refreshHighlights, 500);
   var oc=allTracks.filter(function(t){return t.mainGenre==='Other';}).length;
@@ -2940,10 +2951,10 @@ function riverToggleSel(col,val,shiftHeld){
     if(_riverSel[col].has(val))_riverSel[col].delete(val);
     else _riverSel[col].add(val);
   }
-  renderRiverFlow();
+  renderGrid();
   riverUpdateSelUI();
 }
-function riverClearSel(){_riverSel.gender.clear();_riverSel.genre.clear();_riverSel.time.clear();renderRiverFlow();riverUpdateSelUI();}
+function riverClearSel(){_riverSel.gender.clear();_riverSel.genre.clear();_riverSel.time.clear();renderGrid();riverUpdateSelUI();}
 
 function riverGetFiltered(){
   var tracks=allTracks;
@@ -3042,232 +3053,137 @@ function riverNodeClick(col,val,e){
   }
 }
 
-function renderRiverFlow(){
-  var svg=document.getElementById('river-svg');
-  if(!svg)return;
-  var W=900,H=640,pad=30,colW=110;
-  var gap=(W-pad*2-colW*3)/2;
-  var cols=[pad, pad+colW+gap, pad+colW*2+gap*2];
+function renderGrid(){
+  var matrix=document.getElementById('grid-matrix');
+  var yearBar=document.getElementById('grid-year-bar');
+  if(!matrix||!allTracks.length)return;
 
-  // Decide time column: decade vs year
-  var allYears=[...new Set(allTracks.map(function(t){return t.year;}).filter(Boolean))];
-  var decades=[...new Set(allYears.map(function(y){return Math.floor(y/10)*10;}))];
-  var useDecade=decades.length>1;
-
-  // Count maps
-  var gM={},gnM={},tM={};
-  allTracks.forEach(function(t){
-    gM[t.gender]=(gM[t.gender]||0)+1;
-    gnM[t.mainGenre]=(gnM[t.mainGenre]||0)+1;
-    var tk=useDecade?(Math.floor(t.year/10)*10)+'s':String(t.year);
-    if(t.year)tM[tk]=(tM[tk]||0)+1;
-  });
-
-  var genders=Object.entries(gM).filter(function(e){return e[1]>0;}).sort(function(a,b){return b[1]-a[1];});
-  var genres=Object.entries(gnM).sort(function(a,b){return b[1]-a[1];}).slice(0,10);
-  var times=Object.entries(tM).sort(function(a,b){return a[0].localeCompare(b[0]);});
-  var TOTAL=allTracks.length||1;
-
-  // Playing track info
-  var playing=spCurrentTrackIdx>=0&&spQueue[spCurrentTrackIdx]?spQueue[spCurrentTrackIdx]:null;
-  var pGender=playing?playing.gender:null;
-  var pGenre=playing?playing.mainGenre:null;
-  var pTime=playing&&playing.year?(useDecade?(Math.floor(playing.year/10)*10)+'s':String(playing.year)):null;
-
-  // Layout nodes into columns
-  var rowH=H-80, rowTop=50;
-  function layoutNodes(items){
-    var total=items.reduce(function(s,e){return s+e[1];},0)||1;
-    var y=rowTop, nodes=[];
-    items.forEach(function(e){
-      var h=Math.max(20,(e[1]/total)*rowH);
-      nodes.push({key:e[0],count:e[1],y1:y,y2:y+h,mid:y+h/2});
-      y+=h+6;
-    });
-    return nodes;
-  }
-  var gNodes=layoutNodes(genders);
-  var gnNodes=layoutNodes(genres);
-  var tNodes=layoutNodes(times);
-
-  // Selection state
-  var hasSel=_riverSel.gender.size||_riverSel.genre.size||_riverSel.time.size;
-  var filteredForCount=hasSel?riverGetFiltered():allTracks;
-  var fgM={},fgnM={},ftM={};
-  filteredForCount.forEach(function(t){
-    fgM[t.gender]=(fgM[t.gender]||0)+1;
-    fgnM[t.mainGenre]=(fgnM[t.mainGenre]||0)+1;
-    var tk=useDecade?(Math.floor(t.year/10)*10)+'s':String(t.year);
-    if(t.year)ftM[tk]=(ftM[tk]||0)+1;
-  });
-
-  // Colors
   var gCols={male:'#5C8FD6',female:'#D45C8C','female-lead':'#C060B8','male-lead':'#4070C8',group:'#D4A85C',unknown:'#888'};
   function genreColor(g){var m=window.GENRE_MAP&&window.GENRE_MAP[g];return m?m.color:'#888';}
-  var tColPalette=['#9B7DD4','#5C8FD6','#5CB87C','#D4A85C','#D45C8C','#E06060','#60B0D4','#B4D460','#D48060','#9060D4'];
-  function timeColor(k){var i=tNodes.findIndex(function(n){return n.key===k;});return tColPalette[i%tColPalette.length];}
 
-  // Build SVG — flows first (behind nodes)
-  var flowsHtml='';
+  var playing=spCurrentTrackIdx>=0&&spQueue[spCurrentTrackIdx]?spQueue[spCurrentTrackIdx]:null;
+  var activeYear=window._gridYear||null;
 
-  // Correct Sankey: ONE filled closed bezier per flow, single opacity
-  // The closed bezier naturally tapers. No stacking.
-  function sankeyFlow(x1,y1top,y1bot,x2,y2top,y2bot,color,opacity,animated,animClass){
-    var cx1=x1+gap*0.55, cx2=x2-gap*0.55;
-    // Top curve: x1,y1top → x2,y2top
-    // Bottom curve back: x2,y2bot → x1,y1bot
-    var d='M'+x1+' '+y1top
-      +' C'+cx1+' '+y1top+' '+cx2+' '+y2top+' '+x2+' '+y2top
-      +' L'+x2+' '+y2bot
-      +' C'+cx2+' '+y2bot+' '+cx1+' '+y1bot+' '+x1+' '+y1bot
-      +' Z';
-    var extra='';
-    if(animated){
-      // Animated spine on top of the fill — single dashed line
-      var cy1=(y1top+y1bot)/2, cy2=(y2top+y2bot)/2;
-      extra='<path d="M'+x1+' '+cy1+' C'+cx1+' '+cy1+' '+cx2+' '+cy2+' '+x2+' '+cy2+'"'
-        +' fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"'
-        +' stroke-dasharray="10 15" stroke-linecap="round" class="'+animClass+'"/>';
-      extra+='<path d="M'+x1+' '+cy1+' C'+cx1+' '+cy1+' '+cx2+' '+cy2+' '+x2+' '+cy2+'"'
-        +' fill="none" stroke="'+color+'" stroke-width="3"'
-        +' stroke-dasharray="6 20" stroke-linecap="round" class="rf-b"/>';
-    }
-    return '<path d="'+d+'" fill="'+color+'" opacity="'+opacity+'"/>'+extra;
+  // Filtered tracks
+  var tracks=activeYear?allTracks.filter(function(t){return String(t.year)===String(activeYear);}):allTracks;
+
+  // Build axes
+  var genders=['male','female','group'].filter(function(g){return tracks.some(function(t){return t.gender===g;});});
+  var gnMap={};tracks.forEach(function(t){if(t.mainGenre)gnMap[t.mainGenre]=(gnMap[t.mainGenre]||0)+1;});
+  var genres=Object.entries(gnMap).sort(function(a,b){return b[1]-a[1];}).map(function(e){return e[0];});
+
+  // Populate year bar (only once or when tracks change)
+  if(!yearBar._built||yearBar._trackCount!==allTracks.length){
+    yearBar._built=true;yearBar._trackCount=allTracks.length;
+    var yrMap={};allTracks.forEach(function(t){if(t.year)yrMap[t.year]=(yrMap[t.year]||0)+1;});
+    var yrs=Object.keys(yrMap).sort();
+    // Remove old year buttons (keep All)
+    while(yearBar.children.length>2)yearBar.removeChild(yearBar.lastChild);
+    yrs.forEach(function(yr){
+      var btn=document.createElement('button');
+      btn.className='grid-yr-btn'+(activeYear===yr?' active':'');
+      btn.textContent=yr;
+      btn.addEventListener('click',function(){gridFilterYear(yr);});
+      yearBar.appendChild(btn);
+    });
+    document.getElementById('grid-yr-all').className='grid-yr-btn'+(activeYear?'':' active');
   }
 
-  // Track used vertical space per node to stack flows correctly
-  var g_used={}, gn_used_left={}, gn_used_right={}, t_used={};
-  gNodes.forEach(function(n){g_used[n.key]=0;});
-  gnNodes.forEach(function(n){gn_used_left[n.key]=0;gn_used_right[n.key]=0;});
-  tNodes.forEach(function(n){t_used[n.key]=0;});
-
-  // Gender → Genre flows
+  // Build matrix
+  var maxCount=0;
+  var cells={};
   genders.forEach(function(g){
-    var gn=gNodes.find(function(n){return n.key===g[0];});
-    if(!gn)return;
-    var gH=gn.y2-gn.y1;
-    genres.forEach(function(genre){
-      var gen=gnNodes.find(function(n){return n.key===genre[0];});
-      if(!gen)return;
-      var cnt=allTracks.filter(function(t){return t.gender===g[0]&&t.mainGenre===genre[0];}).length;
-      if(!cnt)return;
-      var genH=gen.y2-gen.y1;
-      var h1=(cnt/g[1])*gH;
-      var h2=(cnt/genre[1])*genH;
-      var y1top=gn.y1+(g_used[g[0]]||0);
-      var y1bot=y1top+h1;
-      var y2top=gen.y1+(gn_used_left[genre[0]]||0);
-      var y2bot=y2top+h2;
-      g_used[g[0]]=(g_used[g[0]]||0)+h1;
-      gn_used_left[genre[0]]=(gn_used_left[genre[0]]||0)+h2;
-      var isPlay=playing&&pGender===g[0]&&pGenre===genre[0];
-      var selActive=hasSel&&(_riverSel.gender.has(g[0])||_riverSel.genre.has(genre[0]));
-      var col=gCols[g[0]]||'#888';
-      var op=isPlay?0.55:selActive?0.45:hasSel?0.04:0.18;
-      var x1=cols[0]+colW, x2=cols[1];
-      flowsHtml+=sankeyFlow(x1,y1top,y1bot,x2,y2top,y2bot,col,op,isPlay,'rf-a');
+    genres.forEach(function(gn){
+      var n=tracks.filter(function(t){return t.gender===g&&t.mainGenre===gn;}).length;
+      cells[g+'|'+gn]=n;
+      if(n>maxCount)maxCount=n;
     });
   });
+  maxCount=maxCount||1;
 
-  // Genre → Time flows
-  genres.forEach(function(genre){
-    var gen=gnNodes.find(function(n){return n.key===genre[0];});
-    if(!gen)return;
-    var genH=gen.y2-gen.y1;
-    times.forEach(function(tm){
-      var tn=tNodes.find(function(n){return n.key===tm[0];});
-      if(!tn)return;
-      var cnt=allTracks.filter(function(t){
-        var tk=useDecade?(Math.floor(t.year/10)*10)+'s':String(t.year);
-        return t.mainGenre===genre[0]&&tk===tm[0];
-      }).length;
-      if(!cnt)return;
-      var tH=tn.y2-tn.y1;
-      var h1=(cnt/genre[1])*genH;
-      var h2=(cnt/tm[1])*tH;
-      var y1top=gen.y1+(gn_used_right[genre[0]]||0);
-      var y1bot=y1top+h1;
-      var y2top=tn.y1+(t_used[tm[0]]||0);
-      var y2bot=y2top+h2;
-      gn_used_right[genre[0]]=(gn_used_right[genre[0]]||0)+h1;
-      t_used[tm[0]]=(t_used[tm[0]]||0)+h2;
-      var isPlay=playing&&pGenre===genre[0]&&pTime===tm[0];
-      var selActive=hasSel&&(_riverSel.genre.has(genre[0])||_riverSel.time.has(tm[0]));
-      var col=genreColor(genre[0]);
-      var op=isPlay?0.55:selActive?0.45:hasSel?0.04:0.18;
-      var x1=cols[1]+colW, x2=cols[2];
-      flowsHtml+=sankeyFlow(x1,y1top,y1bot,x2,y2top,y2bot,col,op,isPlay,'rf-c');
-    });
+  var genderLabels={male:'Male',female:'Female','female-lead':'Female★','male-lead':'Male★',group:'Group'};
+
+  var html='<table class="grid-table"><thead><tr><th class="grid-th" style="min-width:100px;"></th>';
+  genders.forEach(function(g){
+    var col=gCols[g]||'#888';
+    html+='<th class="grid-th" style="text-align:center;">'
+      +'<div style="display:inline-flex;flex-direction:column;align-items:center;gap:3px;">'
+      +'<div style="width:28px;height:28px;border-radius:50%;background:'+col+';display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:#fff;">'
+      +(genderLabels[g]||g).slice(0,1).toUpperCase()+'</div>'
+      +'<span>'+( genderLabels[g]||g)+'</span></div></th>';
   });
+  html+='</tr></thead><tbody>';
 
-  // Column nodes HTML
-  var nodesHtml='';
-  function renderCol(nodes,ci,colName,colorFn,selSet){
-    nodes.forEach(function(n){
-      var x=cols[ci];
-      var col=colorFn(n.key);
-      var h=n.y2-n.y1;
-      var isSel=selSet.has(n.key);
-      var isPlay=(colName==='gender'&&n.key===pGender)||(colName==='genre'&&n.key===pGenre)||(colName==='time'&&n.key===pTime);
-      var alpha=isPlay?1:isSel?0.95:hasSel?0.45:0.82;
-
-      // Node rect
-      nodesHtml+='<g data-col="'+colName+'" data-key="'+n.key.replace(/"/g,'&quot;')+'" style="cursor:pointer">';
-      nodesHtml+='<rect x="'+x+'" y="'+n.y1+'" width="'+colW+'" height="'+h+'" rx="6" fill="'+col+'" opacity="'+alpha+'"/>';
-
-      // Playing: white shimmer pulse (fill, fully contained)
-      if(isPlay){
-        nodesHtml+='<rect x="'+x+'" y="'+n.y1+'" width="'+colW+'" height="'+h+'" rx="6" fill="#fff" opacity="0" pointer-events="none">'
-          +'<animate attributeName="opacity" values="0;0.15;0" dur="1.8s" repeatCount="indefinite"/>'
-          +'</rect>';
+  genres.forEach(function(gn){
+    var gcol=genreColor(gn);
+    var isPlayGenre=playing&&playing.mainGenre===gn;
+    html+='<tr>';
+    html+='<td class="grid-th-genre" title="'+esc(gn)+'" style="color:'+gcol+';font-weight:700;font-size:.72rem;border-left:3px solid '+gcol+';padding-left:8px;">'+esc(gn)+'</td>';
+    genders.forEach(function(g){
+      var n=cells[g+'|'+gn]||0;
+      var col=gCols[g]||'#888';
+      var size=n?Math.round(12+28*(n/maxCount)):0;
+      var isPlay=playing&&playing.gender===g&&playing.mainGenre===gn;
+      var cellCls='grid-cell'+(isPlay?' playing-cell':'');
+      if(n){
+        html+='<td class="'+cellCls+'" data-g="'+g+'" data-gn="'+gn.replace(/"/g,'&quot;')+'" data-yr="'+(activeYear||'')+'">'
+          +'<div class="grid-cell-inner" style="background:'+col+'18;">'
+          +'<div class="grid-bubble" style="width:'+size+'px;height:'+size+'px;background:'+col+';opacity:'+(0.5+0.5*n/maxCount)+';">'+n+'</div>'
+          +'</div></td>';
+      } else {
+        html+='<td><div class="grid-cell-inner" style="opacity:.08;">'
+          +'<div style="width:12px;height:12px;border-radius:50%;background:var(--border);"></div>'
+          +'</div></td>';
       }
+    });
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  matrix.innerHTML=html;
 
-      // Label
-      var fs=h>50?12:h>30?10:h>18?9:8;
-      var ly=n.y1+h/2;
-      if(h>14){
-        var displayCount=hasSel&&fgM[n.key]!=null?(colName==='gender'?fgM[n.key]:colName==='genre'?fgnM[n.key]:ftM[n.key]):null;
-        var cntLabel=displayCount!=null&&displayCount!==n.count?displayCount+'/'+n.count:String(n.count);
-        var cntColor=displayCount!=null&&displayCount!==n.count?'#22c97a':'rgba(255,255,255,.65)';
-        nodesHtml+='<text x="'+(x+colW/2)+'" y="'+(h>32?ly-7:ly)+'" text-anchor="middle" dominant-baseline="central" font-size="'+fs+'" font-weight="600" fill="#fff" pointer-events="none">'+esc(n.key)+'</text>';
-        if(h>32){
-          nodesHtml+='<text x="'+(x+colW/2)+'" y="'+(ly+8)+'" text-anchor="middle" dominant-baseline="central" font-size="9" fill="'+cntColor+'" pointer-events="none">'+cntLabel+'</text>';
-        }
-      }
-      nodesHtml+='</g>';
-
-      // Play button — small circle to the RIGHT, outside col
-      var btnY=n.y1+h/2;
-      nodesHtml+='<g data-playcol="'+colName+'" data-playkey="'+n.key.replace(/"/g,'&quot;')+'" style="cursor:pointer">'
-        +'<circle cx="'+(x+colW+14)+'" cy="'+btnY+'" r="10" fill="'+col+'" opacity="0.85"/>'
-        +'<text x="'+(x+colW+14)+'" y="'+(btnY+1)+'" text-anchor="middle" dominant-baseline="central" font-size="8" fill="#fff" pointer-events="none">▶</text>'
-        +'</g>';
+  // Wire clicks via delegation — no inline onclick strings
+  if(!matrix._wired){
+    matrix._wired=true;
+    matrix.addEventListener('click',function(e){
+      var td=e.target.closest('td[data-g]');
+      if(td)gridPlayCell(td.getAttribute('data-g'),td.getAttribute('data-gn'),td.getAttribute('data-yr'));
     });
   }
 
-  renderCol(gNodes,0,'gender',function(k){return gCols[k]||'#888';},_riverSel.gender);
-  renderCol(gnNodes,1,'genre',genreColor,_riverSel.genre);
-  renderCol(tNodes,2,'time',timeColor,_riverSel.time);
-
-  // Column headers
-  var hdrs='';
-  ['Gender','Genre',useDecade?'Decade':'Year'].forEach(function(h,i){
-    hdrs+='<text x="'+(cols[i]+colW/2)+'" y="32" text-anchor="middle" font-size="12" font-weight="600" fill="var(--muted)">'+h+'</text>';
-  });
-
-  svg.innerHTML=hdrs+flowsHtml+nodesHtml;
-
-  // Wire click events once
-  if(!svg._clickWired){
-    svg._clickWired=true;
-    svg.addEventListener('click',function(e){
-      var pg=e.target.closest('[data-playcol]');
-      if(pg&&!e.shiftKey){e.stopPropagation();riverPlayNode(pg.getAttribute('data-playcol'),pg.getAttribute('data-playkey'),e);return;}
-      var ng=e.target.closest('[data-col]');
-      if(ng)riverNodeClick(ng.getAttribute('data-col'),ng.getAttribute('data-key'),e);
-    });
+  // Playing info
+  var info=document.getElementById('grid-playing-info');
+  if(info&&playing){
+    info.textContent='Now playing: '+playing.name+' — '+playing.artistName
+      +' ('+playing.gender+' · '+playing.mainGenre+' · '+playing.year+')';
   }
 }
+
+function gridFilterYear(yr){
+  window._gridYear=yr||null;
+  // Update button states
+  var bar=document.getElementById('grid-year-bar');
+  if(!bar)return;
+  bar.querySelectorAll('.grid-yr-btn').forEach(function(b){
+    b.classList.toggle('active',
+      yr?b.textContent===String(yr):b.id==='grid-yr-all');
+  });
+  bar._built=false; // force label rebuild
+  renderGrid();
+}
+
+function gridPlayCell(gender,genre,year){
+  var pool=allTracks.filter(function(t){
+    if(t.gender!==gender||t.mainGenre!==genre||!t.spotifyUri)return false;
+    if(year&&year!=='null')return String(t.year)===year;
+    return true;
+  });
+  if(!pool.length){alert('No playable tracks for this cell.');return;}
+  var q=pool.slice();
+  for(var i=q.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=q[i];q[i]=q[j];q[j]=tmp;}
+  spQueue=q;spCurrentTrackIdx=0;spShuffled=true;spQueueSavedIdx=currentSavedIdx;
+  spPlayFromQueue(0);
+}
+
 
 // ══ NEXUS WEB ════════════════════════════════════
 function renderNexusWeb(){
@@ -3420,7 +3336,7 @@ var _origHighlight=typeof highlightPlayingTrack==='function'?highlightPlayingTra
 
 function switchTab(tab){
   // Show/hide views
-  ['view-river','view-nexus','view-songs'].forEach(function(id){
+  ['view-grid','view-nexus','view-songs'].forEach(function(id){
     var el=document.getElementById(id);
     if(el)el.classList.toggle('active',id==='view-'+tab);
   });
@@ -3429,7 +3345,7 @@ function switchTab(tab){
     b.classList.toggle('active',b.getAttribute('data-view')===tab);
   });
   if(tab==='songs'){if(filteredTracks.length===0&&allTracks.length>0)filteredTracks=allTracks.slice();renderTable();}
-  if(tab==='river'){setTimeout(renderRiverFlow,30);}
+  if(tab==='grid'){setTimeout(renderGrid,30);}
   if(tab==='nexus'){setTimeout(renderNexusWeb,30);}
 }
 
