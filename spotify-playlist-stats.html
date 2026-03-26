@@ -8,7 +8,7 @@
 <script src="https://sdk.scdn.co/spotify-player.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@600;700&display=swap');
-[data-theme="light"]{--bg:#f4f2ed;--surface:#fff;--surface2:#eeeae2;--surface3:#e4e0d8;--border:#d8d4cc;--text:#18160f;--text2:#5a5648;--muted:#9a9488;--shadow:rgba(0,0,0,.06);--chart-grid:#eae7e0;--sidebar:#fff;}
+[data-theme="light"]{--bg:#e8eaf0;--surface:#f0f2f7;--surface2:#e0e3ec;--surface3:#d4d8e4;--border:#c4c8d8;--text:#1a1d2e;--text2:#4a5068;--muted:#7a8098;--shadow:rgba(20,25,60,.08);--chart-grid:#d4d8e4;--sidebar:#e8eaf0;}
 [data-theme="dark"]{--bg:#121212;--surface:#181818;--surface2:#282828;--surface3:#333;--border:#3f3f3f;--text:#fff;--text2:#b3b3b3;--muted:#6a6a6a;--shadow:rgba(0,0,0,.6);--chart-grid:#282828;--sidebar:#000;}
 :root{--red:#e8472a;--blue:#2a6ae8;--yellow:#f0b429;--green:#22c97a;--purple:#8b5cf6;--orange:#f97316;--cyan:#06b6d4;--sp:#1DB954;}
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -191,9 +191,9 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .gender-rows{display:flex;flex-direction:column;gap:7px;}
 .gender-row{display:grid;grid-template-columns:88px 1fr auto 28px;align-items:center;gap:9px;cursor:pointer;border-radius:7px;padding:4px 6px;transition:background .15s;margin:-4px -6px;}
 .gender-row:hover{background:var(--surface2);}
-.gender-play{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-size:.65rem;display:flex;align-items:center;justify-content:center;transition:all .18s;flex-shrink:0;opacity:0;}
-.gender-row:hover .gender-play{opacity:1;}
-.gender-play:hover{background:var(--sp);border-color:var(--sp);color:#000;transform:scale(1.1);}
+.gender-play{height:24px;border-radius:99px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-size:.62rem;font-weight:700;padding:0 10px;display:flex;align-items:center;gap:4px;transition:all .18s;flex-shrink:0;white-space:nowrap;}
+.gender-play:hover{background:var(--sp);border-color:var(--sp);color:#000;transform:scale(1.04);}
+.gender-row.sp-active-gender .gender-play{background:var(--sp);border-color:var(--sp);color:#000;}
 .gender-lbl{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);}
 .gender-track{height:26px;background:var(--surface2);border-radius:6px;position:relative;}
 .gender-fill{height:100%;border-radius:6px;transition:width 1.2s cubic-bezier(.16,1,.3,1);min-width:3px;display:flex;align-items:center;}
@@ -221,9 +221,13 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .year-stat-lbl{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:2px;}
 .year-stat-val{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:700;color:var(--text);}
 .year-stat-sub{font-size:.65rem;color:var(--muted);}
-.year-play-btn{position:absolute;top:50%;right:8px;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);background:rgba(0,0,0,.4);color:#fff;cursor:pointer;font-size:.6rem;display:flex;align-items:center;justify-content:center;opacity:0;transition:all .18s;pointer-events:all;}
-.year-bar-group:hover .year-play-btn{opacity:1;}
-.year-play-btn:hover{background:var(--sp);border-color:var(--sp);color:#000;transform:translateY(-50%) scale(1.1);}
+.year-play-row{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;}
+.year-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;border:1.5px solid;background:none;cursor:pointer;transition:all .18s;font-family:'Space Grotesk',sans-serif;}
+.year-pill:hover{background:var(--sp)!important;border-color:var(--sp)!important;color:#000!important;}
+.year-pill-yr{font-size:.72rem;font-weight:700;}
+.year-pill-n{font-size:.62rem;opacity:.7;background:rgba(255,255,255,.1);padding:1px 5px;border-radius:99px;}
+.year-pill:hover .year-pill-n{background:rgba(0,0,0,.15);opacity:1;}
+.sp-active-gender{animation:spOutlinePulse 1.5s ease-in-out infinite!important;border-radius:8px;outline:2px solid var(--sp)!important;outline-offset:2px;background:rgba(29,185,84,.05)!important;}
 
 /* TABLE */
 .filters-bar{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-bottom:11px;}
@@ -344,8 +348,33 @@ html,body{height:100%;overflow-x:hidden;}
 .dash-body{padding:8px 16px 0;}
 #tab-charts{display:none;}
 #tab-songs{display:none;}
+#tab-insights{display:none;}
 #tab-charts.active{display:block!important;}
 #tab-songs.active{display:block!important;}
+#tab-insights.active{display:block!important;}
+.insights-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;padding:4px 0;}
+.ins-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;}
+.ins-card-title{font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+.ins-card-icon{font-size:1rem;}
+.ins-stat-big{font-family:'Syne',sans-serif;font-size:2.4rem;font-weight:700;color:var(--text);line-height:1;}
+.ins-stat-label{font-size:.72rem;color:var(--muted);margin-top:4px;}
+.ins-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.ins-bar-label{font-size:.72rem;color:var(--text2);width:90px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ins-bar-track{flex:1;height:6px;background:var(--surface2);border-radius:99px;overflow:hidden;}
+.ins-bar-fill{height:100%;border-radius:99px;transition:width 1s cubic-bezier(.16,1,.3,1);}
+.ins-bar-val{font-size:.68rem;font-family:'Space Grotesk',sans-serif;color:var(--muted);width:32px;text-align:right;flex-shrink:0;}
+.ins-list{display:flex;flex-direction:column;gap:6px;}
+.ins-list-row{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:7px;background:var(--surface2);cursor:pointer;transition:background .12s;}
+.ins-list-row:hover{background:var(--surface3);}
+.ins-rank{font-size:.62rem;font-weight:700;color:var(--muted);width:16px;text-align:center;flex-shrink:0;}
+.ins-name{flex:1;font-size:.75rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ins-count{font-size:.68rem;font-family:'Space Grotesk',sans-serif;color:var(--muted);flex-shrink:0;}
+.ins-decade-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);}
+.ins-decade-row:last-child{border-bottom:none;}
+.ins-decade-lbl{font-size:.78rem;font-weight:700;}
+.ins-decade-bar-wrap{flex:1;margin:0 10px;height:8px;background:var(--surface2);border-radius:99px;overflow:hidden;}
+.ins-decade-bar{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--blue),var(--purple));}
+.ins-decade-val{font-size:.7rem;color:var(--muted);width:50px;text-align:right;}
 .kpi-row{}
 .tab-bar{}
 .charts-grid{}
@@ -518,6 +547,15 @@ html,body{height:100%;overflow-x:hidden;}
       <span class="sb-icon">📊</span><span class="sb-label">Visualizer</span>
     </div>
     <div class="sb-divider"></div>
+    <div class="sb-divider" id="sb-wiki-divider" style="display:none"></div>
+    <div class="sb-section" id="sb-wiki-section" style="display:none">Enrich Data</div>
+    <div class="sb-item" id="sb-wiki-btn" onclick="lookupWikiLinks()" style="display:none;cursor:pointer;" data-tip="Fetch Wikipedia links for all tracks">
+      <span class="sb-icon">🌐</span><span class="sb-label">Fetch Wikipedia Links</span>
+    </div>
+    <div class="sb-item" id="sb-wiki-genre-btn" onclick="openWikiGenreModal()" style="display:none;cursor:pointer;" data-tip="Update genres from Wikipedia">
+      <span class="sb-icon">📚</span><span class="sb-label">Update Genres from Wiki</span>
+    </div>
+    <div class="sb-divider"></div>
     <div class="sb-section">Saved Playlists</div>
     <input type="file" id="art-upload-inp" accept="image/*" style="display:none" onchange="handleArtUpload(event)" />
     <input type="file" id="sb-csv-input" accept=".csv" style="display:none" />
@@ -657,6 +695,7 @@ html,body{height:100%;overflow-x:hidden;}
       <div class="tab-bar">
         <button class="tab active" onclick="switchTab('charts')">📊 Charts</button>
         <button class="tab" onclick="switchTab('songs')">🎵 Songs</button>
+        <button class="tab" onclick="switchTab('insights')">🔬 Insights</button>
       </div>
       <div id="tab-charts" class="active">
         <div class="charts-grid">
@@ -713,8 +752,7 @@ html,body{height:100%;overflow-x:hidden;}
             </div>
             <div class="lookup-status" id="lookup-status"></div>
             <div class="wiki-row">
-              <button class="wiki-btn" id="wiki-btn" onclick="lookupWikiLinks()">🌐 Fetch Wikipedia links</button>
-              <button class="wiki-btn" id="wiki-genre-btn" onclick="openWikiGenreModal()" style="display:none">📚 Update genres from Wiki</button>
+              <!-- wiki buttons moved to sidebar -->
             </div>
           </div>
         </div>
@@ -754,6 +792,11 @@ html,body{height:100%;overflow-x:hidden;}
             </table>
           </div>
           <div id="no-results" style="display:none;text-align:center;padding:40px 20px;color:var(--muted)"><div style="font-size:2rem;margin-bottom:8px">🎸</div>No tracks match.</div>
+        </div>
+      </div>
+      <div id="tab-insights">
+        <div class="insights-grid" id="insights-grid">
+          <!-- rendered by renderInsights() -->
         </div>
       </div>
     </div>
@@ -2150,7 +2193,9 @@ function highlightPlayingTrack(track){
       if(document.getElementById('tab-songs').classList.contains('active'))row.scrollIntoView({behavior:'smooth',block:'nearest'});
     }
   });
-  document.querySelectorAll('#gender-bars .gender-row').forEach(function(row){var oc=row.getAttribute('onclick')||'';if(oc.indexOf("'"+track.gender+"'")>=0||oc.indexOf('"'+track.gender+'"')>=0)row.classList.add('sp-active-gender');});
+  document.querySelectorAll('#gender-bars .gender-row').forEach(function(row){
+    if(row.getAttribute('data-gender')===track.gender)row.classList.add('sp-active-gender');
+  });
   document.querySelectorAll('#genre-tiles .genre-tile').forEach(function(tile){var oc=tile.getAttribute('onclick')||'';if(oc.indexOf(track.mainGenre)>=0)tile.classList.add('sp-active-tile');});
   updateYearBarOverlay(track);
 }
@@ -2310,6 +2355,7 @@ function renderGenderBars(){
     var lbl=(cfg[g]&&cfg[g].l)||g;
     var row=document.createElement('div');
     row.className='gender-row';
+    row.setAttribute('data-gender',g);
     row.innerHTML='<div class="gender-lbl">'+lbl+'</div>'
       +'<div class="gender-track">'
         +'<div class="gender-fill" style="width:'+Math.max(pct,.3)+'%;background:'+color+';">'
@@ -2318,7 +2364,7 @@ function renderGenderBars(){
         +(!inBar?'<span class="gender-pct-out" style="left:calc('+Math.max(pct,.3)+'% + 6px);color:var(--text2)">'+ps+'</span>':'')
       +'</div>'
       +'<div class="gender-num">'+c+'</div>'
-      +'<button class="gender-play" title="Shuffle play '+lbl+'">▶</button>';
+      +'<button class="gender-play" title="Shuffle play '+lbl+'">▶ Play</button>';
     // click bar = open modal, click play btn = play
     row.addEventListener('click', function(ev){
       if(ev.target.classList.contains('gender-play'))return;
@@ -2428,9 +2474,21 @@ function renderYearStats(years,minY,maxY){
   var second=years.filter(function(y){return y>mid;}).length;
   var yc={};years.forEach(function(y){yc[y]=(yc[y]||0)+1;});
   var peak=Object.entries(yc).sort(function(a,b){return b[1]-a[1];})[0];
+  // Sort unique years for pill row
+  var uniqueYears=Object.keys(yc).map(Number).sort(function(a,b){return a-b;});
+  function gc(n){return n>=10?'var(--green)':n>=5?'var(--yellow)':n>=2?'var(--blue)':'var(--red)';}
   el.innerHTML='<div class="year-stat"><div class="year-stat-lbl">First Half</div><div class="year-stat-val">'+first+'</div><div class="year-stat-sub">'+minY+'–'+mid+'</div></div>'
     +'<div class="year-stat"><div class="year-stat-lbl">Second Half</div><div class="year-stat-val">'+second+'</div><div class="year-stat-sub">'+(mid+1)+'–'+maxY+'</div></div>'
-    +'<div class="year-stat"><div class="year-stat-lbl">Peak Year</div><div class="year-stat-val">'+peak[0]+'</div><div class="year-stat-sub">'+peak[1]+' songs</div></div>';
+    +'<div class="year-stat"><div class="year-stat-lbl">Peak Year</div><div class="year-stat-val">'+peak[0]+'</div><div class="year-stat-sub">'+peak[1]+' songs</div></div>'
+    +'<div class="year-play-row">'
+    +uniqueYears.map(function(yr){
+      var n=yc[yr];
+      return '<button class="year-pill" onclick="spPlayByYear('+yr+')" title="Shuffle play '+yr+' ('+n+' songs)" style="border-color:'+gc(n)+'20;color:'+gc(n)+';">'
+        +'<span class="year-pill-yr">'+yr+'</span>'
+        +'<span class="year-pill-n">'+n+'</span>'
+        +'</button>';
+    }).join('')
+    +'</div>';
 }
 
 // ══ GENERIC MODAL
@@ -2632,6 +2690,175 @@ function renderTable(){
   });
 }
 
+// ══ INSIGHTS TAB
+function renderInsights(){
+  var grid=document.getElementById('insights-grid');
+  if(!grid||!allTracks.length)return;
+  var tracks=allTracks;
+  grid.innerHTML='';
+
+  // ── Top Artists
+  var artistCount={};
+  tracks.forEach(function(t){artistCount[t.artistName]=(artistCount[t.artistName]||0)+1;});
+  var topArtists=Object.entries(artistCount).sort(function(a,b){return b[1]-a[1];}).slice(0,8);
+  grid.appendChild(insCard('🎤','Top Artists',topArtists.map(function(e,i){
+    return insListRow(i+1,e[0],e[1]+' track'+(e[1]>1?'s':''),e[1]/tracks.length);
+  }).join('')));
+
+  // ── Decade breakdown
+  var decades={};
+  tracks.forEach(function(t){if(!t.year)return;var d=Math.floor(t.year/10)*10;decades[d]=(decades[d]||0)+1;});
+  var maxD=Math.max.apply(null,Object.values(decades));
+  var decHtml=Object.entries(decades).sort(function(a,b){return a[0]-b[0];}).map(function(e){
+    var pct=Math.round(e[1]/tracks.length*100);
+    return '<div class="ins-decade-row">'
+      +'<div class="ins-decade-lbl">'+e[0]+'s</div>'
+      +'<div class="ins-decade-bar-wrap"><div class="ins-decade-bar" style="width:'+Math.round(e[1]/maxD*100)+'%"></div></div>'
+      +'<div style="font-size:.72rem;color:var(--muted);width:60px;text-align:right;">'+e[1]+' · '+pct+'%</div>'
+    +'</div>';
+  }).join('');
+  grid.appendChild(insCard('📅','By Decade',decHtml));
+
+  // ── Avg duration
+  var durMs=tracks.filter(function(t){return t.durationMs>0;}).map(function(t){return t.durationMs;});
+  var avgMs=durMs.reduce(function(a,b){return a+b;},0)/Math.max(durMs.length,1);
+  var totalMs=durMs.reduce(function(a,b){return a+b;},0);
+  var avgMin=Math.floor(avgMs/60000);var avgSec=Math.round((avgMs%60000)/1000);
+  var totalH=Math.floor(totalMs/3600000);var totalM=Math.floor((totalMs%3600000)/60000);
+  var shortest=tracks.filter(function(t){return t.durationMs>30000;}).sort(function(a,b){return a.durationMs-b.durationMs;})[0];
+  var longest=tracks.slice().sort(function(a,b){return b.durationMs-a.durationMs;})[0];
+  function fmtDur(ms){return Math.floor(ms/60000)+':'+(Math.round((ms%60000)/1000)+'').padStart(2,'0');}
+  var durHtml='<div class="ins-stat-big">'+avgMin+':'+String(avgSec).padStart(2,'0')+'</div>'
+    +'<div class="ins-stat-label">avg track length</div>'
+    +'<div style="margin-top:12px;font-size:.75rem;color:var(--muted);">Total runtime: <b style="color:var(--text)">'+totalH+'h '+totalM+'m</b></div>'
+    +(shortest?'<div style="margin-top:6px;font-size:.72rem;color:var(--muted);">Shortest: <b style="color:var(--text)">'+esc(shortest.name)+'</b> ('+fmtDur(shortest.durationMs)+')</div>':'')
+    +(longest?'<div style="margin-top:4px;font-size:.72rem;color:var(--muted);">Longest: <b style="color:var(--text)">'+esc(longest.name)+'</b> ('+fmtDur(longest.durationMs)+')</div>':'');
+  grid.appendChild(insCard('⏱','Track Duration',durHtml));
+
+  // ── Genre × Decade heatmap
+  var gd={};
+  tracks.forEach(function(t){
+    if(!t.year||!t.mainGenre)return;
+    var d=Math.floor(t.year/10)*10;
+    var k=t.mainGenre+'|'+d;
+    gd[k]=(gd[k]||0)+1;
+  });
+  var genres2=[...new Set(tracks.map(function(t){return t.mainGenre;}))].filter(Boolean).slice(0,6);
+  var decades2=[...new Set(tracks.filter(function(t){return t.year;}).map(function(t){return Math.floor(t.year/10)*10;}))].sort();
+  var maxGD=Math.max.apply(null,Object.values(gd).concat([1]));
+  var hmHtml='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.66rem;">'
+    +'<tr><th style="text-align:left;color:var(--muted);padding:2px 4px;"></th>'
+    +decades2.map(function(d){return '<th style="color:var(--muted);padding:2px 4px;font-weight:600;">'+d+'s</th>';}).join('')
+    +'</tr>'
+    +genres2.map(function(g){
+      var cfg=GENRE_MAP&&GENRE_MAP[g];
+      var col=cfg?cfg.color:'#888';
+      return '<tr><td style="color:var(--text2);font-weight:600;padding:3px 4px;white-space:nowrap;">'+(cfg?cfg.icon+' ':'')+g+'</td>'
+        +decades2.map(function(d){
+          var n=gd[g+'|'+d]||0;
+          var alpha=n?Math.max(.15,n/maxGD):.04;
+          return '<td style="text-align:center;padding:3px;"><div style="width:28px;height:20px;border-radius:4px;background:'+col+';opacity:'+alpha+';display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.62rem;">'+(n||'')+'</div></td>';
+        }).join('')
+      +'</tr>';
+    }).join('')
+    +'</table></div>';
+  grid.appendChild(insCard('🗺','Genre × Decade Heatmap',hmHtml));
+
+  // ── Energy profile (track length as proxy, popularity if available)
+  var hasPopularity=tracks.some(function(t){return t.popularity>0;});
+  if(hasPopularity){
+    var popBuckets={'Under 40':[],  '40–59':[], '60–79':[], '80+':[]};
+    tracks.forEach(function(t){
+      if(!t.popularity)return;
+      if(t.popularity<40)popBuckets['Under 40'].push(t);
+      else if(t.popularity<60)popBuckets['40–59'].push(t);
+      else if(t.popularity<80)popBuckets['60–79'].push(t);
+      else popBuckets['80+'].push(t);
+    });
+    var popMax=Math.max.apply(null,Object.values(popBuckets).map(function(a){return a.length;}));
+    var popHtml='<div style="display:flex;flex-direction:column;gap:8px;">'
+      +Object.entries(popBuckets).map(function(e){
+        var pct=Math.round(e[1].length/tracks.length*100);
+        return '<div class="ins-bar-row">'
+          +'<div class="ins-bar-label">'+e[0]+'</div>'
+          +'<div class="ins-bar-track"><div class="ins-bar-fill" style="width:'+Math.round(e[1].length/Math.max(popMax,1)*100)+'%;background:linear-gradient(90deg,var(--blue),var(--sp));"></div></div>'
+          +'<div class="ins-bar-val">'+pct+'%</div>'
+        +'</div>';
+      }).join('')
+      +'<div style="font-size:.7rem;color:var(--muted);margin-top:4px;">Based on Spotify popularity score</div>'
+      +'</div>';
+    grid.appendChild(insCard('📈','Popularity Spread',popHtml));
+  }
+
+  // ── Vibe score — ratio of up-tempo (post 2000, electronic/pop/hip-hop) vs chill
+  var vibeMap={Electronic:3,Pop:2,'Hip-Hop':2,'R&B/Soul':1,Rock:1,Folk:-1,Jazz:-1,Classical:-2,Country:0,Other:0};
+  var vibeTotal=tracks.reduce(function(sum,t){return sum+(vibeMap[t.mainGenre]||0);},0);
+  var vibeAvg=vibeTotal/Math.max(tracks.length,1);
+  var vibeLabel=vibeAvg>1.5?'High Energy 🔥':vibeAvg>0.5?'Upbeat ⚡':vibeAvg>-0.5?'Balanced 🎵':vibeAvg>-1.5?'Mellow 🌙':'Chill 😌';
+  var vibeScore=Math.round((vibeAvg+2)/4*100);
+  var vibeHtml='<div class="ins-stat-big">'+vibeLabel+'</div>'
+    +'<div style="margin-top:12px;height:8px;background:var(--surface2);border-radius:99px;overflow:hidden;">'
+    +'<div style="height:100%;width:'+vibeScore+'%;background:linear-gradient(90deg,var(--blue),var(--sp),var(--red));border-radius:99px;transition:width 1s;"></div>'
+    +'</div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:.62rem;color:var(--muted);margin-top:4px;"><span>😌 Chill</span><span>🔥 Energy</span></div>'
+    +'<div style="font-size:.72rem;color:var(--muted);margin-top:8px;">Based on genre mix · '+vibeScore+'/100 energy index</div>';
+  grid.appendChild(insCard('⚡','Playlist Vibe',vibeHtml));
+
+  // ── Listening era — year distribution
+  var yc2={};tracks.forEach(function(t){if(t.year)yc2[t.year]=(yc2[t.year]||0)+1;});
+  var sortedYears=Object.entries(yc2).sort(function(a,b){return b[1]-a[1];}).slice(0,6);
+  var peakYr=sortedYears[0];
+  var medianYrTracks=tracks.filter(function(t){return t.year;}).map(function(t){return t.year;}).sort(function(a,b){return a-b;});
+  var medianYr=medianYrTracks[Math.floor(medianYrTracks.length/2)]||'—';
+  var eraHtml='<div style="display:flex;gap:16px;margin-bottom:12px;">'
+    +'<div><div class="ins-stat-big">'+(peakYr?peakYr[0]:'—')+'</div><div class="ins-stat-label">peak year ('+(peakYr?peakYr[1]:'0')+' tracks)</div></div>'
+    +'<div><div class="ins-stat-big">'+medianYr+'</div><div class="ins-stat-label">median year</div></div>'
+    +'</div>'
+    +'<div style="font-size:.7rem;color:var(--text2);font-weight:600;margin-bottom:6px;">Most played years:</div>'
+    +sortedYears.map(function(e){
+      return '<div class="ins-bar-row"><div class="ins-bar-label">'+e[0]+'</div>'
+        +'<div class="ins-bar-track"><div class="ins-bar-fill" style="width:'+Math.round(e[1]/sortedYears[0][1]*100)+'%;background:var(--blue);"></div></div>'
+        +'<div class="ins-bar-val">'+e[1]+'</div></div>';
+    }).join('');
+  grid.appendChild(insCard('📆','Listening Era',eraHtml));
+
+  // ── Gender × Genre matrix
+  var gg={};var genderList=['male','female','female-lead','male-lead','group'];
+  tracks.forEach(function(t){var k=t.mainGenre+'|'+t.gender;gg[k]=(gg[k]||0)+1;});
+  var topGenres3=Object.entries(pCountObj(tracks,'mainGenre')).sort(function(a,b){return b[1]-a[1];}).slice(0,5).map(function(e){return e[0];});
+  var gLabels={male:'M',female:'F','female-lead':'F★','male-lead':'M★',group:'G'};
+  var gColors={male:'var(--blue)',female:'var(--red)','female-lead':'#e020a0','male-lead':'#2040c0',group:'var(--yellow)'};
+  var ggHtml='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.68rem;">'
+    +'<tr><th style="text-align:left;color:var(--muted);padding:2px 4px;"></th>'
+    +genderList.map(function(g){return '<th style="color:var(--muted);padding:2px 4px;">'+(gLabels[g]||g)+'</th>';}).join('')
+    +'</tr>'
+    +topGenres3.map(function(genre){
+      var gcfg=GENRE_MAP&&GENRE_MAP[genre];
+      return '<tr><td style="font-size:.66rem;font-weight:600;color:var(--text2);padding:3px 4px;white-space:nowrap;">'+(gcfg?gcfg.icon+' ':'')+genre+'</td>'
+        +genderList.map(function(g){
+          var n=gg[genre+'|'+g]||0;
+          return '<td style="text-align:center;padding:3px;font-size:.68rem;color:'+(n?(gColors[g]||'var(--text)'):'var(--border)')+';font-weight:700;">'+( n||'·')+'</td>';
+        }).join('')
+      +'</tr>';
+    }).join('')+'</table></div>';
+  grid.appendChild(insCard('🧬','Gender × Genre',ggHtml));
+}
+
+function pCountObj(arr,key){var o={};arr.forEach(function(t){if(t[key])o[t[key]]=(o[t[key]]||0)+1;});return o;}
+
+function insCard(icon,title,html){
+  var d=document.createElement('div');d.className='ins-card';
+  d.innerHTML='<div class="ins-card-title"><span class="ins-card-icon">'+icon+'</span>'+title+'</div>'+html;
+  return d;
+}
+function insListRow(rank,name,meta,pct){
+  return '<div class="ins-list-row">'
+    +'<div class="ins-rank">'+rank+'</div>'
+    +'<div class="ins-name">'+esc(name)+'</div>'
+    +'<div class="ins-count">'+meta+'</div>'
+  +'</div>';
+}
+
 function switchTab(tab){
   document.querySelectorAll('.tab').forEach(function(t,i){t.classList.toggle('active',(i===0&&tab==='charts')||(i===1&&tab==='songs'));});
   document.getElementById('tab-charts').classList.toggle('active',tab==='charts');
@@ -2680,9 +2907,15 @@ function loadSaved(i){
   initDashboard(p.name);renderSBSaved();
   // Restore wiki button state
   var wikiCount=allTracks.filter(function(t){return t.wikiUrl;}).length;
-  var wikiBtn=document.getElementById('wiki-btn');
-  var wikiGenreBtn=document.getElementById('wiki-genre-btn');
-  if(wikiBtn)wikiBtn.textContent=wikiCount>0?'🌐 '+wikiCount+' wiki links found':'🌐 Fetch Wikipedia links';
+  var wikiBtn=document.getElementById('sb-wiki-btn');
+  var wikiGenreBtn=document.getElementById('sb-wiki-genre-btn');
+  // Show/hide wiki sidebar section based on whether playlist is loaded
+  var hasTracks=allTracks&&allTracks.length>0;
+  var wikiDiv=document.getElementById('sb-wiki-divider');
+  var wikiSec=document.getElementById('sb-wiki-section');
+  if(wikiDiv)wikiDiv.style.display=hasTracks?'':'none';
+  if(wikiSec)wikiSec.style.display=hasTracks?'':'none';
+  if(wikiBtn){wikiBtn.style.display=(hasTracks&&wikiCount<allTracks.length)?'flex':'none';}
   if(wikiGenreBtn)wikiGenreBtn.style.display=wikiCount>0?'inline-flex':'none';
   // Restore date lookup status
   var corrected=allTracks.filter(function(t){return t.originalYear&&t.originalYear!==t.spotifyYear;}).length;
@@ -2737,17 +2970,17 @@ function autoSaveCurrentPlaylist(){
 }
 async function lookupWikiLinks(){
   if(wikiRunning)return;wikiRunning=true;
-  var btn=document.getElementById('wiki-btn');btn.disabled=true;btn.textContent='🔄 Fetching...';
+  var btn=document.getElementById('sb-wiki-btn');if(btn){btn.style.pointerEvents='none';btn.querySelector&&btn.querySelector('.sb-label')&&(btn.querySelector('.sb-label').textContent='Fetching...');};
   var found=0;
   for(var i=0;i<allTracks.length;i++){
     var t=allTracks[i];if(t.wikiUrl)continue;
     try{var q=encodeURIComponent(t.name+' '+t.artistName+' song');var r=await fetch('https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch='+q+'&srlimit=1&format=json&origin=*');if(r.ok){var d=await r.json();var h=d.query&&d.query.search&&d.query.search[0];if(h){t.wikiUrl='https://en.wikipedia.org/wiki/'+encodeURIComponent(h.title.replace(/ /g,'_'));found++;}}}catch(e){}
     if(i%8===7)await sleep(150);
   }
-  wikiRunning=false;btn.disabled=false;
+  wikiRunning=false;if(btn){btn.style.pointerEvents='';}
   var totalWiki=allTracks.filter(function(t){return t.wikiUrl;}).length;
   btn.textContent='🌐 '+totalWiki+' wiki links found';
-  document.getElementById('wiki-genre-btn').style.display='inline-flex';
+  var wgb=document.getElementById('sb-wiki-genre-btn');if(wgb)wgb.style.display='flex';
   autoSaveCurrentPlaylist();
   renderTable();
 }
