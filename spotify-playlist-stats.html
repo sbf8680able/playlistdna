@@ -1617,18 +1617,21 @@ function startSpotifyAuth(){
   var clientId=APP_CLIENT_ID||localStorage.getItem('sp_client_id')||'';
   var redirectUri=APP_REDIRECT_URI||localStorage.getItem('sp_redirect_uri')||'';
   if(!redirectUri||redirectUri.startsWith('file://')){redirectUri='';localStorage.removeItem('sp_redirect_uri');}
-  // Fully pre-configured: one-click mode — show a clean confirm screen
+  // If fully configured — skip ALL screens, go straight to Spotify
+  if(clientId&&redirectUri){
+    spClientId=clientId;
+    localStorage.setItem('sp_client_id',clientId);
+    localStorage.setItem('sp_redirect_uri',redirectUri);
+    _doAuthWith(clientId,redirectUri);
+    return;
+  }
+  // Not configured — show manual setup form
   var pre=document.getElementById('oauth-preconfigured');
   var man=document.getElementById('oauth-manual');
-  if(clientId&&redirectUri){
-    if(pre)pre.style.display='flex';
-    if(man)man.style.display='none';
-  } else {
-    if(pre)pre.style.display='none';
-    if(man)man.style.display='flex';
-    document.getElementById('oauth-client-id').value=clientId;
-    document.getElementById('oauth-redirect-uri').value=redirectUri;
-  }
+  if(pre)pre.style.display='none';
+  if(man)man.style.display='flex';
+  document.getElementById('oauth-client-id').value=clientId;
+  document.getElementById('oauth-redirect-uri').value=redirectUri;
   document.getElementById('welcome-screen').style.display='none';
   if(document.getElementById('dashboard'))document.getElementById('dashboard').style.display='none';
   document.getElementById('oauth-screen').classList.add('active');
