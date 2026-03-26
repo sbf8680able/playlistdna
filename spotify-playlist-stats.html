@@ -487,18 +487,7 @@ html,body{height:100%;overflow-x:hidden;}
     <button class="sb-toggle" id="sb-toggle" onclick="toggleSidebar()">◀</button>
   </div>
   <div class="sidebar-body">
-    <div class="sb-section">Import</div>
-    <button class="sb-sp-btn" id="sb-import-btn" onclick="openImportFlow()" data-tip="Import a playlist" style="background:var(--sp);color:#000;font-weight:700;margin-bottom:4px;">
-      <span class="sb-icon">📋</span><span class="sb-label">Import Playlist</span>
-    </button>
-    <div class="sb-dz" id="sb-dz" data-tip="Import CSV (fallback)">
-      <input type="file" id="sb-csv-input" accept=".csv" />
-      <div class="sb-dz-icon">📥</div>
-      <div class="sb-dz-label">Drop CSV (fallback)</div>
-      <div class="sb-dz-sub">or click to browse</div>
-    </div>
-    <div class="sb-divider"></div>
-    <div class="sb-section">Spotify Playback</div>
+    <div class="sb-section">Spotify</div>
     <button class="sb-sp-btn" id="sb-sp-btn" onclick="handleSpotifyBtnClick()" data-tip="Connect Spotify">
       <span class="sb-icon" id="sb-sp-icon">🎵</span><span class="sb-label" id="sb-sp-label">Connect Spotify</span>
     </button>
@@ -525,6 +514,7 @@ html,body{height:100%;overflow-x:hidden;}
     <div class="sb-divider"></div>
     <div class="sb-section">Saved Playlists</div>
     <input type="file" id="art-upload-inp" accept="image/*" style="display:none" onchange="handleArtUpload(event)" />
+    <input type="file" id="sb-csv-input" accept=".csv" style="display:none" />
     <div id="sb-saved-list"></div>
   </div>
 </div>
@@ -606,19 +596,26 @@ html,body{height:100%;overflow-x:hidden;}
   </div>
 
   <!-- Welcome -->
-  <div id="welcome-screen" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;padding:40px;text-align:center;gap:16px;">
-    <div style="font-family:'Syne',sans-serif;font-size:clamp(2rem,6vw,4rem);font-weight:700;letter-spacing:-2px;"><span style="color:var(--red)">PLAY</span><span style="color:var(--blue)">LIST</span><span style="color:var(--yellow)">DNA</span></div>
-    <div style="font-size:.78rem;letter-spacing:3px;text-transform:uppercase;color:var(--muted)">Decode your musical identity</div>
-    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:8px;">
-      <button onclick="openImportFlow()" id="welcome-import-btn" style="display:none;background:var(--sp);color:#000;border:none;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;padding:14px 32px;border-radius:99px;display:flex;align-items:center;gap:10px;transition:all .2s;" onmouseover="this.style.background='#1ed760'" onmouseout="this.style.background='var(--sp)'">
-        <span style="font-size:1.2rem;">🎵</span> Import a Playlist
+  <div id="welcome-screen" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;padding:40px;text-align:center;gap:0;">
+    <div style="font-family:'Syne',sans-serif;font-size:clamp(2rem,6vw,4rem);font-weight:700;letter-spacing:-2px;margin-bottom:6px;"><span style="color:var(--red)">PLAY</span><span style="color:var(--blue)">LIST</span><span style="color:var(--yellow)">DNA</span></div>
+    <div style="font-size:.78rem;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:40px;">Decode your musical identity</div>
+
+    <!-- Step 1: Connect Spotify -->
+    <div id="step-connect" style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+      <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:4px;">Step 1 of 2</div>
+      <button onclick="startSpotifyAuth()" style="background:var(--sp);color:#000;border:none;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;padding:16px 36px;border-radius:99px;display:flex;align-items:center;gap:10px;transition:all .2s;font-size:1.05rem;" onmouseover="this.style.background='#1ed760'" onmouseout="this.style.background='var(--sp)'">
+        <span style="font-size:1.3rem;">🎵</span> Connect Spotify
       </button>
-      <div id="welcome-connect-prompt" style="display:none;">
-        <button onclick="startSpotifyAuth()" style="background:var(--sp);color:#000;border:none;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;padding:14px 32px;border-radius:99px;transition:all .2s;" onmouseover="this.style.background='#1ed760'" onmouseout="this.style.background='var(--sp)'">
-          Connect Spotify to get started
-        </button>
-      </div>
-      <div style="font-size:.78rem;color:var(--muted);">or drop a saved playlist in the left panel</div>
+      <div style="font-size:.75rem;color:var(--muted);">Requires Spotify Premium</div>
+    </div>
+
+    <!-- Step 2: Import (shown after connect) -->
+    <div id="step-import" style="display:none;flex-direction:column;align-items:center;gap:10px;">
+      <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--sp);margin-bottom:4px;">✓ Spotify Connected — Step 2 of 2</div>
+      <button onclick="openImportFlow()" id="welcome-import-btn" style="background:var(--sp);color:#000;border:none;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.05rem;padding:16px 36px;border-radius:99px;display:flex;align-items:center;gap:10px;transition:all .2s;" onmouseover="this.style.background='#1ed760'" onmouseout="this.style.background='var(--sp)'">
+        <span style="font-size:1.3rem;">📋</span> Import a Playlist
+      </button>
+      <div style="font-size:.75rem;color:var(--muted);">Opens Exportify · drag the CSV back to import</div>
     </div>
   </div>
 
@@ -1694,12 +1691,16 @@ function mapGenreFromTags(tags) {
 
 // Show correct CTA on welcome screen based on Spotify connection
 function updateWelcomeScreen() {
-  var importBtn = document.getElementById('welcome-import-btn');
-  var connectPrompt = document.getElementById('welcome-connect-prompt');
-  if (!importBtn) return;
-  // Always show Import button — works with or without Spotify (CSV fallback)
-  importBtn.style.display = 'flex';
-  if (connectPrompt) connectPrompt.style.display = 'none';
+  var stepConnect = document.getElementById('step-connect');
+  var stepImport = document.getElementById('step-import');
+  if (!stepConnect || !stepImport) return;
+  if (spToken) {
+    stepConnect.style.display = 'none';
+    stepImport.style.display = 'flex';
+  } else {
+    stepConnect.style.display = 'flex';
+    stepImport.style.display = 'none';
+  }
 }
 
 // ══ PROCESS FILE
@@ -1749,8 +1750,9 @@ async function aiClassifyGenres(tracks,key){
 
 // ══ SPOTIFY AUTH (PKCE)
 function handleSpotifyBtnClick(){
-  if(spToken){openImportFlow();return;}
-  startSpotifyAuth();
+  // Sidebar Spotify button: if connected, do nothing (status shows)
+  // If not connected, start auth
+  if(!spToken) startSpotifyAuth();
 }
 function startSpotifyAuth(){
   var clientId=APP_CLIENT_ID||localStorage.getItem('sp_client_id')||'';
