@@ -1303,12 +1303,25 @@ async function openSpotifyImport() {
     return;
   }
   _spSelectedPlaylist = null;
-  document.getElementById('sp-pl-grid').innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:.82rem;">Loading your playlists…</div>';
+  // Show modal immediately with spinner — don't wait for fetch
   document.getElementById('sp-import-progress').style.display = 'none';
   document.getElementById('sp-import-search').value = '';
+  document.getElementById('sp-import-search').style.display = '';
   var btn = document.getElementById('sp-import-go-btn');
   btn.disabled = true; btn.style.opacity = '.4'; btn.style.cursor = 'not-allowed';
   document.getElementById('sp-import-sel-label').textContent = 'Select a playlist';
+  // Set spinner BEFORE opening modal so it's visible immediately
+  var grid = document.getElementById('sp-pl-grid');
+  grid.innerHTML = '';
+  var spinWrap = document.createElement('div');
+  spinWrap.style.cssText = 'padding:32px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;';
+  var spinner = document.createElement('div');
+  spinner.style.cssText = 'width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--sp);border-radius:50%;animation:spin .7s linear infinite;';
+  var spinTxt = document.createElement('div');
+  spinTxt.style.cssText = 'font-size:.78rem;color:var(--muted);';
+  spinTxt.textContent = 'Loading your playlists…';
+  spinWrap.appendChild(spinner);spinWrap.appendChild(spinTxt);
+  grid.appendChild(spinWrap);
   openModal('sp-import-modal');
   await loadSpPlaylists();
 }
@@ -1334,13 +1347,17 @@ function setSpPickerMsg(msg, btnLabel, btnFn) {
   g.appendChild(wrap);
 }
 async function loadSpPlaylists() {
-  await ensureToken();
+  // Only refresh if token is actually expired
+  var tokenExp=parseInt(localStorage.getItem('sp_token_exp')||'0');
+  if(!spToken||(Date.now()>tokenExp&&localStorage.getItem('sp_refresh'))){
+    await ensureToken();
+  }
   if(!spToken){
     setSpPickerMsg('Not connected to Spotify.','Reconnect',function(){closeModal('sp-import-modal');startSpotifyAuth();});
     return;
   }
   var all = [];
-  var url = 'https://api.spotify.com/v1/me/playlists?limit=50';
+  var url = 'https://api.spotify.com/v1/me/playlists?limit=50&fields=next,items(id,name,images,tracks,owner(display_name),collaborative,public)';
   var attempts = 0;
   while (url && attempts < 20) {
     attempts++;
@@ -1374,7 +1391,7 @@ function renderSpPlaylists(list) {
     var artHtml = img
       ? '<img class="sp-pl-art" src="' + img + '" loading="lazy" />'
       : '<div class="sp-pl-art-ph">🎵</div>';
-    var count = pl.tracks ? pl.tracks.total : 0;
+    var count = (pl.tracks && pl.tracks.total > 0) ? pl.tracks.total : (pl.tracks ? '?' : '?');
     var safeName = (pl.name||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     return '<div class="sp-pl-row" data-id="' + pl.id + '" onclick="selectSpPlaylist(this,\'' + pl.id + '\',\'' + safeName + '\',' + count + ')">'
       + artHtml
@@ -1400,6 +1417,7 @@ function filterSpPlaylists(q) {
 }
 
 function selectSpPlaylist(el, id, name, count) {
+  count = parseInt(count) || 0; // normalize — '?' becomes 0, will get real count on import
   document.querySelectorAll('.sp-pl-row').forEach(function(r) { r.classList.remove('selected'); });
   el.classList.add('selected');
   _spSelectedPlaylist = { id: id, name: name, count: count };
