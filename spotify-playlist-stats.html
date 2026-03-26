@@ -1633,14 +1633,15 @@ function startSpotifyAuth(){
   if(document.getElementById('dashboard'))document.getElementById('dashboard').style.display='none';
   document.getElementById('oauth-screen').classList.add('active');
 }
-function doAuthDirectly(){
-  // Used by the pre-configured panel — reads stored values, never touches input fields
+async function doAuthDirectly(){
   var clientId=APP_CLIENT_ID||localStorage.getItem('sp_client_id')||'';
   var redirectUri=APP_REDIRECT_URI||localStorage.getItem('sp_redirect_uri')||'';
-  if(!clientId){alert('No Spotify Client ID found. Please use the manual setup.');return;}
-  if(!redirectUri||redirectUri.startsWith('file://')){alert('No valid Redirect URI found. Please use the manual setup.');return;}
+  if(!clientId){alert('No Spotify Client ID found.');return;}
+  if(!redirectUri||redirectUri.startsWith('file://')){alert('No valid Redirect URI found.');return;}
   spClientId=clientId;
-  _doAuthWith(clientId,redirectUri);
+  localStorage.setItem('sp_client_id',clientId);
+  localStorage.setItem('sp_redirect_uri',redirectUri);
+  await _doAuthWith(clientId,redirectUri);
 }
 async function _doAuthWith(clientId, redirectUri){
   // Generate PKCE challenge and redirect to Spotify
