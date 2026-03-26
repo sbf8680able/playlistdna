@@ -1383,25 +1383,36 @@ async function loadSpPlaylists() {
 function renderSpPlaylists(list) {
   var grid = document.getElementById('sp-pl-grid');
   if (!list.length) {
-    grid.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:.82rem;">No playlists found.</div>';
+    setSpPickerMsg('No playlists found. Try reconnecting Spotify.','Reconnect',function(){closeModal('sp-import-modal');localStorage.removeItem('sp_refresh');startSpotifyAuth();});
     return;
   }
-  grid.innerHTML = list.map(function(pl) {
+  grid.innerHTML = '';
+  list.forEach(function(pl) {
+    var row = document.createElement('div');
+    row.className = 'sp-pl-row';
+    row.setAttribute('data-id', pl.id);
+    row.setAttribute('data-name', pl.name||'');
+    // Track count — use total if available, otherwise show blank
+    var total = pl.tracks && pl.tracks.total > 0 ? pl.tracks.total : '';
+    var countLabel = total ? total + ' tracks' : 'tracks loading…';
+
     var img = pl.images && pl.images[0] ? pl.images[0].url : '';
-    var artHtml = img
-      ? '<img class="sp-pl-art" src="' + img + '" loading="lazy" />'
-      : '<div class="sp-pl-art-ph">🎵</div>';
-    var count = (pl.tracks && pl.tracks.total > 0) ? pl.tracks.total : (pl.tracks ? '?' : '?');
-    var safeName = (pl.name||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    return '<div class="sp-pl-row" data-id="' + pl.id + '" onclick="selectSpPlaylist(this,\'' + pl.id + '\',\'' + safeName + '\',' + count + ')">'
-      + artHtml
-      + '<div class="sp-pl-info">'
-        + '<div class="sp-pl-name">' + esc(pl.name) + '</div>'
-        + '<div class="sp-pl-meta">' + count + ' tracks' + (pl.owner ? ' · ' + esc(pl.owner.display_name) : '') + '</div>'
-      + '</div>'
-      + '<div class="sp-pl-check">✓</div>'
-    + '</div>';
-  }).join('');
+    var art = document.createElement(img ? 'img' : 'div');
+    if (img) { art.className='sp-pl-art'; art.src=img; art.loading='lazy'; }
+    else { art.className='sp-pl-art-ph'; art.textContent='🎵'; }
+
+    var info = document.createElement('div'); info.className='sp-pl-info';
+    var nm = document.createElement('div'); nm.className='sp-pl-name'; nm.textContent=pl.name||'';
+    var mt = document.createElement('div'); mt.className='sp-pl-meta';
+    mt.textContent=countLabel+(pl.owner?' · '+pl.owner.display_name:'');
+    info.appendChild(nm); info.appendChild(mt);
+
+    var chk = document.createElement('div'); chk.className='sp-pl-check'; chk.textContent='✓';
+
+    row.appendChild(art); row.appendChild(info); row.appendChild(chk);
+    row.addEventListener('click', function(){ selectSpPlaylist(row, pl.id, pl.name||'', total||0); });
+    grid.appendChild(row);
+  });
 }
 
 function filterSpPlaylists(q) {
@@ -1417,7 +1428,7 @@ function filterSpPlaylists(q) {
 }
 
 function selectSpPlaylist(el, id, name, count) {
-  count = parseInt(count) || 0; // normalize — '?' becomes 0, will get real count on import
+  count = parseInt(count) || 0;
   document.querySelectorAll('.sp-pl-row').forEach(function(r) { r.classList.remove('selected'); });
   el.classList.add('selected');
   _spSelectedPlaylist = { id: id, name: name, count: count };
@@ -1438,6 +1449,12 @@ async function importSelectedPlaylist() {
 
   try {
     await ensureToken();
+    // 0. Get real track count if we don't have it
+    if(!pl.count){
+      var meta = await fetch('https://api.spotify.com/v1/playlists/'+pl.id+'?fields=tracks(total)',{headers:{'Authorization':'Bearer '+spToken}});
+      if(meta.ok){var md=await meta.json();pl.count=md.tracks&&md.tracks.total||0;}
+    }
+    setSpImportProgress('Fetching '+pl.count+' tracks from Spotify…', 5);
     // 1. Fetch all tracks in pages of 100
     var items = [];
     var url = 'https://api.spotify.com/v1/playlists/' + pl.id + '/tracks?limit=100&fields=next,items(track(id,name,duration_ms,album(name,images,release_date),artists(name),external_ids,uri))';
