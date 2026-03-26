@@ -2210,8 +2210,8 @@ function showLoading(msg){
   setLoadingText(msg);
 }
 function hideLoading(){document.getElementById('loading-screen').style.display='none';}
-function setLoadingText(t){document.getElementById('loading-text').textContent=t;}
-function setProgress(p){document.getElementById('progress-bar').style.width=p+'%';}
+function setLoadingText(t){var el=document.getElementById('loading-text');if(el)el.textContent=t;}
+function setProgress(p){var el=document.getElementById('progress-bar');if(el)el.style.width=p+'%';}
 function initDashboard(name){
   clearAllHighlights();
   hideLoading();
@@ -2232,7 +2232,7 @@ function initDashboard(name){
   if(wSec)wSec.style.display='';
   if(wBtn)wBtn.style.display=wikiCount2<allTracks.length?'flex':'none';
   if(wGBtn)wGBtn.style.display=wikiCount2>0?'flex':'none';
-  document.getElementById('welcome-screen').style.display='none';
+  ['welcome-screen','loading-screen'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
   document.getElementById('oauth-screen').classList.remove('active');
   document.getElementById('dashboard').style.display='block';
   document.getElementById('topbar').style.display='flex';
@@ -2245,7 +2245,7 @@ function initDashboard(name){
   setTopbarArt(art);
   updateAllKPIs();
   setTimeout(updateLookupCount,100);
-  if(sidebarOpen)setTimeout(toggleSidebar,200);
+  // sidebar state preserved on dashboard load
 }
 function renderDashboard(name){initDashboard(name);}
 function showDashboard(){
@@ -3311,8 +3311,8 @@ function loadSaved(i){
   var wikiSec=document.getElementById('sb-wiki-section');
   if(wikiDiv)wikiDiv.style.display=hasTracks?'':'none';
   if(wikiSec)wikiSec.style.display=hasTracks?'':'none';
-  if(wikiBtn){wikiBtn.style.display=(hasTracks&&wikiCount<allTracks.length)?'flex':'none';}
-  if(wikiGenreBtn)wikiGenreBtn.style.display=wikiCount>0?'inline-flex':'none';
+  if(wikiBtn){wikiBtn.style.display=(hasTracks&&wikiCount<allTracks.length)?'flex':'none';var wl=wikiBtn.querySelector('.sb-label');if(wl)wl.textContent='Fetch Wikipedia Links';}
+  if(wikiGenreBtn)wikiGenreBtn.style.display=wikiCount>0?'flex':'none';
   // Restore date lookup status
   var corrected=allTracks.filter(function(t){return t.originalYear&&t.originalYear!==t.spotifyYear;}).length;
   var lookupStatus=document.getElementById('lookup-status');
@@ -3366,7 +3366,7 @@ function autoSaveCurrentPlaylist(){
 }
 async function lookupWikiLinks(){
   if(wikiRunning)return;wikiRunning=true;
-  var btn=document.getElementById('sb-wiki-btn');if(btn){btn.style.pointerEvents='none';btn.querySelector&&btn.querySelector('.sb-label')&&(btn.querySelector('.sb-label').textContent='Fetching...');};
+  var btn=document.getElementById('sb-wiki-btn');if(btn){btn.style.pointerEvents='none';var bl=btn.querySelector('.sb-label');if(bl)bl.textContent='Fetching...';};
   var found=0;
   for(var i=0;i<allTracks.length;i++){
     var t=allTracks[i];if(t.wikiUrl)continue;
@@ -3375,7 +3375,7 @@ async function lookupWikiLinks(){
   }
   wikiRunning=false;if(btn){btn.style.pointerEvents='';}
   var totalWiki=allTracks.filter(function(t){return t.wikiUrl;}).length;
-  btn.textContent='🌐 '+totalWiki+' wiki links found';
+  if(btn){var lbl=btn.querySelector('.sb-label');if(lbl)lbl.textContent=totalWiki+' wiki links found';if(totalWiki>=allTracks.length)btn.style.display='none';}
   var wgb=document.getElementById('sb-wiki-genre-btn');if(wgb)wgb.style.display='flex';
   autoSaveCurrentPlaylist();
   renderTable();
