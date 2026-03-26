@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -481,6 +481,10 @@ html,body{height:100%;overflow-x:hidden;}
       <div class="sb-dz-label">Drop Exportify CSV</div>
       <div class="sb-dz-sub">or click to browse</div>
     </div>
+    <div class="sb-item" onclick="openExportifyGuide()" data-tip="Get CSV from Exportify" style="cursor:pointer;">
+      <span class="sb-icon">📤</span>
+      <span class="sb-label">Export from Spotify</span>
+    </div>
     <a href="https://exportify.net" target="_blank" class="sb-item" data-tip="Open Exportify">
       <span class="sb-icon">🎧</span><span class="sb-label">Open Exportify →</span>
     </a>
@@ -494,7 +498,11 @@ html,body{height:100%;overflow-x:hidden;}
     <div class="sb-section">Settings</div>
     <div class="sb-api" data-tip="Anthropic Key">
       <div style="font-size:.63rem;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Anthropic API Key</div>
-      <input type="password" class="sb-api-input" id="sb-api-key" placeholder="sk-ant-... (gender + genre AI)" oninput="localStorage.setItem('anthropic_key',this.value)" />
+      <input type="password" class="sb-api-input" id="sb-api-key" placeholder="sk-ant-... (AI features)" oninput="localStorage.setItem('anthropic_key',this.value)" />
+    </div>
+    <div class="sb-item" onclick="openShareModal()" data-tip="Share app with friends" style="cursor:pointer">
+      <span class="sb-icon" id="share-icon">🔗</span>
+      <span class="sb-label" id="share-label">Share App</span>
     </div>
     <div class="sb-item" onclick="toggleTheme()" data-tip="Toggle theme" style="cursor:pointer">
       <span class="sb-icon" id="theme-icon">🌙</span><span class="sb-label" id="theme-label">Dark mode</span>
@@ -564,12 +572,21 @@ html,body{height:100%;overflow-x:hidden;}
   <!-- OAuth -->
   <div class="oauth-screen" id="oauth-screen">
     <div class="oauth-logo"><span class="r">PLAY</span><span class="b">LIST</span><span class="y">DNA</span></div>
-    <p style="font-size:.86rem;color:var(--text2);max-width:340px;line-height:1.7">Connect your Spotify Premium account for in-app playback. One-time setup.</p>
-    <input type="text" class="oauth-input" id="oauth-client-id" placeholder="Spotify Client ID" />
-    <input type="text" class="oauth-input" id="oauth-redirect-uri" placeholder="Redirect URI — must start with http:// or https://" />
-    <div style="font-size:.72rem;color:var(--muted);max-width:340px;line-height:1.6;">Must match exactly what you set in your Spotify app dashboard. Cannot be a <code>file://</code> path.</div>
-    <button class="oauth-btn" onclick="doSpotifyAuth()"><span>🎵</span> Connect with Spotify</button>
-    <div style="font-size:.75rem;color:var(--muted)">Requires Spotify Premium · <a href="#" onclick="cancelAuth();return false;" style="color:var(--blue)">Skip for now</a> · <a href="#" onclick="localStorage.removeItem('sp_redirect_uri');document.getElementById('oauth-redirect-uri').value='';return false;" style="color:var(--red)">Clear saved URI</a></div>
+    <!-- Pre-configured: just one button -->
+    <div id="oauth-preconfigured" style="display:none;flex-direction:column;align-items:center;gap:10px;text-align:center;max-width:340px;">
+      <p style="font-size:.86rem;color:var(--text2);line-height:1.7;">Connect your Spotify Premium account to play music inside the app.</p>
+      <button class="oauth-btn" onclick="doSpotifyAuth()"><span>🎵</span> Connect with Spotify</button>
+      <div style="font-size:.72rem;color:var(--muted)">Requires Spotify Premium &middot; <a href="#" onclick="cancelAuth();return false;" style="color:var(--blue)">Skip for now</a></div>
+    </div>
+    <!-- Manual setup: show inputs -->
+    <div id="oauth-manual" style="display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;max-width:380px;">
+      <p style="font-size:.86rem;color:var(--text2);line-height:1.7;">One-time setup — enter your Spotify app credentials. <a href="https://developer.spotify.com/dashboard" target="_blank" style="color:var(--blue)">Get them here ↗</a></p>
+      <input type="text" class="oauth-input" id="oauth-client-id" placeholder="Spotify Client ID" />
+      <input type="text" class="oauth-input" id="oauth-redirect-uri" placeholder="Redirect URI (https://...)" />
+      <div style="font-size:.7rem;color:var(--muted);line-height:1.6;">Must match exactly what you set in your Spotify dashboard.</div>
+      <button class="oauth-btn" onclick="doSpotifyAuth()"><span>🎵</span> Connect with Spotify</button>
+      <div style="font-size:.72rem;color:var(--muted)">Requires Spotify Premium &middot; <a href="#" onclick="cancelAuth();return false;" style="color:var(--blue)">Skip for now</a></div>
+    </div>
   </div>
 
   <!-- Loading -->
@@ -875,7 +892,62 @@ var sidebarOpen=true, lyricsVisible=false;
 var lyricsTrackName='';
 
 // ══ SPOTIFY SDK STATE
+// ══ DEPLOYMENT CONFIG ════════════════════════════════════
+// Fill these in before sharing. When set, users never see
+// the Client ID / Redirect URI form — one click to connect.
+var APP_CLIENT_ID    = '';  // Your Spotify App Client ID
+var APP_REDIRECT_URI = '';  // e.g. https://yourname.github.io/playlistdna/spotify-playlist-stats.html
+// Proxy URL: deploy worker.js to Cloudflare Workers, paste the URL here.
+// When set, the Anthropic API key input disappears and AI features
+// just work for everyone — key stays server-side, never in the browser.
+var PROXY_URL = ''; // e.g. 'https://playlistdna-proxy.yourname.workers.dev'
+var APP_ANTHROPIC_KEY = ''; // Only use this if NOT using the proxy (less secure)
+// ══════════════════════════════════════════════════════════
+
 var spPlayer=null, spDeviceId=null, spToken=null, spClientId='';
+
+// ══ CLAUDE API HELPER
+// Routes through PROXY_URL (preferred) or direct with user's key
+async function claudeAPI(prompt, maxTokens, model) {
+  model = model || 'claude-haiku-4-5-20251001';
+  maxTokens = maxTokens || 500;
+  var body = JSON.stringify({
+    model: model,
+    max_tokens: maxTokens,
+    messages: [{role:'user', content: prompt}]
+  });
+
+  if (PROXY_URL) {
+    // Use proxy — key is server-side, no key needed in browser
+    var r = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: body
+    });
+    if (!r.ok) throw new Error('Proxy error ' + r.status);
+    var d = await r.json();
+    if (d.error) throw new Error(d.error.message || 'API error');
+    return d.content[0].text;
+  }
+
+  // Fallback: direct call with user's key
+  var key = APP_ANTHROPIC_KEY || localStorage.getItem('anthropic_key') || '';
+  if (!key) throw new Error('no_key');
+  var r2 = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: body
+  });
+  if (!r2.ok) throw new Error('API error ' + r2.status);
+  var d2 = await r2.json();
+  if (d2.error) throw new Error(d2.error.message || 'API error');
+  return d2.content[0].text;
+}
 var spPlaying=false, spShuffled=true, spMuted=false, spVolume=0.8;
 var spCurrentTrackIdx=-1, spQueue=[], spProgressInterval=null;
 var spQueueSavedIdx=-1; // which saved playlist the current queue belongs to (-1 = freshly imported)
@@ -1103,8 +1175,9 @@ async function detectGenders(names,key){
 Rules: bands with clear lead of known gender → use that gender (Nirvana→male,No Doubt→female,Garbage→female,Hole→female,Cranberries→female,Blondie→female). "group"=mixed-gender or no clear lead.
 Return ONLY valid JSON. Keys=exact artist names. Values="male","female","group". No markdown.\n\nArtists:\n${chunk.map(n=>`- ${n}`).join('\n')}`;
     try{
-      const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,messages:[{role:'user',content:prompt}]})});
-      if(resp.ok){const d=await resp.json();const t=d.content?.[0]?.text||'{}';const p=JSON.parse(t.replace(/```json|```/g,'').trim());Object.assign(result,p);}
+      const text=await claudeAPI(prompt,1200,'claude-haiku-4-5-20251001');
+      const p=JSON.parse(text.replace(/```json|```/g,'').trim());
+      Object.assign(result,p);
     }catch(e){console.warn('Gender chunk failed',e);}
     setProgress(20+Math.round((i/names.length)*65));
   }
@@ -1128,7 +1201,9 @@ function toggleSidebar(){
 // ══ THEME
 function toggleTheme(){
   darkMode=!darkMode;
-  document.documentElement.setAttribute('data-theme',darkMode?'dark':'light');
+  var theme=darkMode?'dark':'light';
+  document.documentElement.setAttribute('data-theme',theme);
+  localStorage.setItem('pdna_theme',theme);
   document.getElementById('theme-icon').textContent=darkMode?'☀️':'🌙';
   document.getElementById('theme-label').textContent=darkMode?'Light mode':'Dark mode';
   if(yearChartInst){
@@ -1144,21 +1219,77 @@ function toggleTheme(){
 function closeModal(id){document.getElementById(id).style.display='none';}
 function openModal(id){document.getElementById(id).style.display='block';}
 
+function openShareModal(){
+  var clientId=APP_CLIENT_ID||localStorage.getItem('sp_client_id')||'';
+  var redirectUri=APP_REDIRECT_URI||localStorage.getItem('sp_redirect_uri')||'';
+  if(!clientId||!redirectUri){
+    alert('Connect Spotify first — the invite link needs your Spotify credentials.');
+    return;
+  }
+  // Show proxy status
+  var statusEl=document.getElementById('share-proxy-status');
+  var keyOption=document.getElementById('share-key-option');
+  if(statusEl){
+    if(PROXY_URL){
+      statusEl.innerHTML='<span style="color:var(--green);">✓ Proxy active</span> — AI features work for everyone automatically. No API key needed in the link.';
+      if(keyOption)keyOption.style.display='none';
+    } else {
+      statusEl.innerHTML='<span style="color:var(--yellow);">⚠ No proxy configured</span> — AI features require each user to enter their own Anthropic key, or include yours in the link (risky).';
+      if(keyOption)keyOption.style.display='flex';
+    }
+  }
+  document.getElementById('share-link-wrap').style.display='none';
+  openModal('share-modal');
+}
+
+function generateShareLink(){
+  var clientId=APP_CLIENT_ID||localStorage.getItem('sp_client_id')||'';
+  var redirectUri=APP_REDIRECT_URI||localStorage.getItem('sp_redirect_uri')||'';
+  if(!clientId||!redirectUri){
+    alert('No Spotify credentials found. Connect Spotify first.');
+    return;
+  }
+  var base=redirectUri; // share link lands on the app itself
+  var params='?cid='+encodeURIComponent(clientId)+'&ru='+encodeURIComponent(redirectUri);
+  var includeKey=document.getElementById('share-include-key').checked;
+  if(includeKey){
+    var key=APP_ANTHROPIC_KEY||localStorage.getItem('anthropic_key')||'';
+    if(key)params+='&ak='+encodeURIComponent(key);
+  }
+  var link=base+params;
+  var out=document.getElementById('share-link-output');
+  if(out)out.value=link;
+  document.getElementById('share-link-wrap').style.display='block';
+}
+
+function copyShareLink(){
+  var out=document.getElementById('share-link-output');
+  if(!out)return;
+  navigator.clipboard.writeText(out.value).then(function(){
+    var btn=out.nextElementSibling;
+    if(btn){var orig=btn.textContent;btn.textContent='Copied!';setTimeout(function(){btn.textContent=orig;},2000);}
+  }).catch(function(){out.select();document.execCommand('copy');});
+}
+
+function openExportifyGuide(){
+  openModal('exportify-modal');
+}
+
 // ══ FILE DROP
 (function(){var z=document.getElementById('sb-dz');if(z){z.addEventListener('dragover',function(e){e.preventDefault();z.classList.add('over');});z.addEventListener('dragleave',function(){z.classList.remove('over');});z.addEventListener('drop',function(e){e.preventDefault();z.classList.remove('over');if(e.dataTransfer.files[0])processFile(e.dataTransfer.files[0]);});}var ci=document.getElementById('sb-csv-input');if(ci)ci.addEventListener('change',function(e){if(e.target.files[0])processFile(e.target.files[0]);});var ud=document.getElementById('update-dz');if(ud){ud.addEventListener('dragover',function(e){e.preventDefault();ud.style.borderColor='var(--blue)';});ud.addEventListener('dragleave',function(){ud.style.borderColor='var(--border)';});ud.addEventListener('drop',function(e){e.preventDefault();ud.style.borderColor='var(--border)';if(e.dataTransfer.files[0])processUpdateCSV(e.dataTransfer.files[0]);});}var ui=document.getElementById('update-csv-inp');if(ui)ui.addEventListener('change',function(e){if(e.target.files[0])processUpdateCSV(e.target.files[0]);});})();
 
 // ══ PROCESS FILE
 async function processFile(file){
-  var key=document.getElementById('sb-api-key').value.trim();
+  var hasAI=!!(PROXY_URL||APP_ANTHROPIC_KEY||localStorage.getItem('anthropic_key'));
   showLoading('Parsing playlist...');setProgress(10);
   try{
     var text=await file.text();
     var tracks=parseCSV(text);
     if(!tracks.length)throw new Error('No tracks found in CSV');
-    if(key){
+    if(hasAI){
       var names=[...new Set(tracks.map(function(t){return t.artistName;}))];
       setLoadingText('AI analyzing '+names.length+' artists...');setProgress(20);
-      var gm=await detectGenders(names,key);
+      var gm=await detectGenders(names,null);
       tracks.forEach(function(t){t.gender=gm[t.artistName]||'unknown';});
       var others=tracks.filter(function(t){return t.mainGenre==='Other';});
       if(others.length>0&&others.length<=80){
@@ -1185,26 +1316,42 @@ async function aiClassifyGenres(tracks,key){
   var list=tracks.map(function(t){return '"'+t.name.replace(/"/g,'')+'" by '+t.artistName+' (tags:'+t.genres.join(',')+')';}).join('\n');
   var prompt='Classify each song into ONE of: '+genres.join(', ')+'.\nReturn ONLY JSON array: [{"name":"Song","artist":"Artist","genre":"Rock"}]\nSongs:\n'+list;
   try{
-    var r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,messages:[{role:'user',content:prompt}]})});
-    if(r.ok){var d=await r.json();var t=d.content&&d.content[0]&&d.content[0].text||'[]';return JSON.parse(t.replace(/```json|```/g,'').trim());}
+    var text=await claudeAPI(prompt,2000,'claude-haiku-4-5-20251001');
+    return JSON.parse(text.replace(/```json|```/g,'').trim());
   }catch(e){console.warn('AI genre fail',e);}
   return[];
 }
 
 // ══ SPOTIFY AUTH (PKCE)
 function startSpotifyAuth(){
-  var savedId=localStorage.getItem('sp_client_id')||'';
-  var savedUri=localStorage.getItem('sp_redirect_uri')||'';
-  // Discard any stale file:// URI — Spotify only accepts http/https redirect URIs
-  if(!savedUri||savedUri.startsWith('file://')){
-    savedUri='';
-    localStorage.removeItem('sp_redirect_uri');
+  var clientId=APP_CLIENT_ID||localStorage.getItem('sp_client_id')||'';
+  var redirectUri=APP_REDIRECT_URI||localStorage.getItem('sp_redirect_uri')||'';
+  if(!redirectUri||redirectUri.startsWith('file://')){redirectUri='';localStorage.removeItem('sp_redirect_uri');}
+  // Fully pre-configured: one-click mode — show a clean confirm screen
+  var pre=document.getElementById('oauth-preconfigured');
+  var man=document.getElementById('oauth-manual');
+  if(clientId&&redirectUri){
+    if(pre)pre.style.display='flex';
+    if(man)man.style.display='none';
+  } else {
+    if(pre)pre.style.display='none';
+    if(man)man.style.display='flex';
+    document.getElementById('oauth-client-id').value=clientId;
+    document.getElementById('oauth-redirect-uri').value=redirectUri;
   }
-  document.getElementById('oauth-client-id').value=savedId;
-  document.getElementById('oauth-redirect-uri').value=savedUri;
   document.getElementById('welcome-screen').style.display='none';
-  document.getElementById('dashboard').style.display='none';
+  if(document.getElementById('dashboard'))document.getElementById('dashboard').style.display='none';
   document.getElementById('oauth-screen').classList.add('active');
+}
+async function _doAuthWith(clientId, redirectUri){
+  // Generate PKCE challenge and redirect to Spotify
+  var verifier=btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  var digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier));
+  var challenge=btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  sessionStorage.setItem('sp_verifier',verifier);
+  sessionStorage.setItem('sp_redirect',redirectUri);
+  var scope='streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state user-read-currently-playing';
+  window.location.href='https://accounts.spotify.com/authorize?response_type=code&client_id='+clientId+'&scope='+encodeURIComponent(scope)+'&redirect_uri='+encodeURIComponent(redirectUri)+'&code_challenge_method=S256&code_challenge='+challenge;
 }
 function cancelAuth(){
   document.getElementById('oauth-screen').classList.remove('active');
@@ -1214,21 +1361,16 @@ function cancelAuth(){
   } else document.getElementById('welcome-screen').style.display='flex';
 }
 async function doSpotifyAuth(){
-  spClientId=document.getElementById('oauth-client-id').value.trim();
+  spClientId=APP_CLIENT_ID||document.getElementById('oauth-client-id').value.trim();
   if(!spClientId){alert('Please enter your Spotify Client ID.');return;}
-  var redirectUri=document.getElementById('oauth-redirect-uri').value.trim();
+  var redirectUri=APP_REDIRECT_URI||document.getElementById('oauth-redirect-uri').value.trim();
   if(!redirectUri||redirectUri.startsWith('file://')){
-    alert('Please enter a valid Redirect URI starting with http:// or https://\n\nIf running locally via a web server, use something like:\nhttp://127.0.0.1:8080/spotify-playlist-stats.html');
+    alert('Please enter a valid Redirect URI starting with https://');
     return;
   }
   localStorage.setItem('sp_client_id',spClientId);
   localStorage.setItem('sp_redirect_uri',redirectUri);
-  var verifier=generatePKCEVerifier();
-  var challenge=await generatePKCEChallenge(verifier);
-  sessionStorage.setItem('sp_verifier',verifier);
-  sessionStorage.setItem('sp_redirect',redirectUri);
-  var params=new URLSearchParams({client_id:spClientId,response_type:'code',redirect_uri:redirectUri,scope:'streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state',code_challenge_method:'S256',code_challenge:challenge});
-  window.location.href='https://accounts.spotify.com/authorize?'+params;
+  _doAuthWith(spClientId,redirectUri);
 }
 function generatePKCEVerifier(){
   var arr=new Uint8Array(64);crypto.getRandomValues(arr);
@@ -1241,8 +1383,8 @@ async function generatePKCEChallenge(verifier){
 }
 async function exchangeSpotifyCode(code){
   var verifier=sessionStorage.getItem('sp_verifier');
-  var redirectUri=sessionStorage.getItem('sp_redirect')||localStorage.getItem('sp_redirect_uri')||window.location.href.split('?')[0].split('#')[0];
-  spClientId=localStorage.getItem('sp_client_id')||'';
+  var redirectUri=APP_REDIRECT_URI||sessionStorage.getItem('sp_redirect')||localStorage.getItem('sp_redirect_uri')||window.location.href.split('?')[0].split('#')[0];
+  spClientId=APP_CLIENT_ID||localStorage.getItem('sp_client_id')||'';
   if(!spClientId||!verifier)return;
   try{
     var resp=await fetch('https://accounts.spotify.com/api/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'authorization_code',code:code,redirect_uri:redirectUri,client_id:spClientId,code_verifier:verifier})});
@@ -1258,7 +1400,7 @@ async function exchangeSpotifyCode(code){
 }
 async function refreshSpotifyToken(){
   var refresh=localStorage.getItem('sp_refresh');
-  spClientId=localStorage.getItem('sp_client_id')||'';
+  spClientId=APP_CLIENT_ID||localStorage.getItem('sp_client_id')||'';
   if(!refresh||!spClientId)return false;
   try{
     var resp=await fetch('https://accounts.spotify.com/api/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'refresh_token',refresh_token:refresh,client_id:spClientId})});
@@ -2037,10 +2179,10 @@ async function processUpdateCSV(file){
 }
 async function applyUpdate(){
   if(!pendingNewTracks.length){closeModal('update-modal');return;}
-  var key=document.getElementById('sb-api-key').value.trim();
-  if(key){
+  var hasAI=!!(PROXY_URL||APP_ANTHROPIC_KEY||localStorage.getItem('anthropic_key'));
+  if(hasAI){
     var names=[...new Set(pendingNewTracks.map(function(t){return t.artistName;}).filter(function(n){return !allTracks.find(function(x){return x.artistName===n;});}))];
-    if(names.length){var gm=await detectGenders(names,key);pendingNewTracks.forEach(function(t){t.gender=gm[t.artistName]||'unknown';});}
+    if(names.length){var gm=await detectGenders(names,null);pendingNewTracks.forEach(function(t){t.gender=gm[t.artistName]||'unknown';});}
   }
   pendingNewTracks.forEach(function(t){t.isNew=true;});
   allTracks=allTracks.concat(pendingNewTracks);filteredTracks=allTracks.slice();
@@ -2140,12 +2282,15 @@ function updateExpandedPlayer(){
 }
 
 async function fetchTrackFacts(track){
-  var key=document.getElementById('sb-api-key').value.trim();
   var factEl=document.getElementById('exp-fact');
-  if(!key){_currentFacts=['Released in '+track.year+'.','Artist: '+track.artistName+'.','Genre: '+track.mainGenre+'.'];if(factEl)factEl.textContent=_currentFacts[0];return;}
+  // Check if AI is available (proxy or user key)
+  var hasAI=!!(PROXY_URL||APP_ANTHROPIC_KEY||localStorage.getItem('anthropic_key'));
+  if(!hasAI){_currentFacts=['Released in '+track.year+'.','Artist: '+track.artistName+'.','Genre: '+track.mainGenre+'.'];if(factEl)factEl.textContent=_currentFacts[0];return;}
   try{
-    var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:400,messages:[{role:'user',content:'Give me 5 short, surprising, VH1 Pop-Up Video style facts about "'+track.name+'" by '+track.artistName+' ('+track.year+'). Include song facts, artist facts, and era/pop culture connections. Return ONLY a JSON array of 5 strings.'}]})});
-    if(resp.ok){var d=await resp.json();var txt=d.content&&d.content[0]&&d.content[0].text||'[]';var facts=JSON.parse(txt.replace(/```json|```/g,'').trim());if(Array.isArray(facts)&&facts.length){_currentFacts=facts;startFactRotation();return;}}
+    var prompt='Give me 5 short, surprising, VH1 Pop-Up Video style facts about "'+track.name+'" by '+track.artistName+' ('+track.year+'). Include song facts, artist facts, and era/pop culture connections. Return ONLY a JSON array of 5 strings.';
+    var txt=await claudeAPI(prompt,400,'claude-haiku-4-5-20251001');
+    var facts=JSON.parse(txt.replace(/```json|```/g,'').trim());
+    if(Array.isArray(facts)&&facts.length){_currentFacts=facts;startFactRotation();return;}
   }catch(e){}
   _currentFacts=[track.name+' — '+track.artistName+' ('+track.year+')'];if(factEl)factEl.textContent=_currentFacts[0];
 }
@@ -2490,9 +2635,45 @@ function _syncVizPanel(){/* no-op, now fullscreen */}
 
 // ══ INIT
 (async function(){
-  (function(){var k=localStorage.getItem('anthropic_key'),e=document.getElementById('sb-api-key');if(e&&k)e.value=k;})();
-  ['pb-shuffle','pb-shuffle-exp'].forEach(function(id){var el=document.getElementById(id);if(el)el.classList.add('sp-active');});
+  // ── Theme: restore or default dark
+  var savedTheme=localStorage.getItem('pdna_theme')||'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  darkMode=(savedTheme==='dark');
+  var themeIcon=document.getElementById('theme-icon');
+  var themeLabel=document.getElementById('theme-label');
+  if(themeIcon)themeIcon.textContent=darkMode?'☀️':'🌙';
+  if(themeLabel)themeLabel.textContent=darkMode?'Light mode':'Dark mode';
+
+  // ── Anthropic key: proxy takes priority, then APP key, then localStorage
+  var apiKey=APP_ANTHROPIC_KEY||localStorage.getItem('anthropic_key')||'';
+  var apiEl=document.getElementById('sb-api-key');
+  if(apiEl){
+    if(PROXY_URL){
+      // Proxy is configured — hide the key input entirely, AI just works
+      var apiSection=apiEl.closest('div');
+      if(apiSection)apiSection.style.display='none';
+    } else if(apiKey){
+      apiEl.value=apiKey;
+    }
+  }
+
+  // ── URL params: support invite links (?cid=...&ru=...&ak=...)
   var params=new URLSearchParams(window.location.search);
+  var urlClientId=params.get('cid');
+  var urlRedirectUri=params.get('ru');
+  var urlApiKey=params.get('ak');
+  if(urlClientId){localStorage.setItem('sp_client_id',urlClientId);}
+  if(urlRedirectUri){localStorage.setItem('sp_redirect_uri',decodeURIComponent(urlRedirectUri));}
+  if(urlApiKey){localStorage.setItem('anthropic_key',urlApiKey);if(apiEl)apiEl.value=urlApiKey;}
+  // Clean URL after reading params (don't leave credentials in address bar)
+  if(urlClientId||urlRedirectUri||urlApiKey){
+    window.history.replaceState({},'',window.location.pathname);
+  }
+
+  // ── Shuffle init
+  ['pb-shuffle','pb-shuffle-exp'].forEach(function(id){var el=document.getElementById(id);if(el)el.classList.add('sp-active');});
+
+  // ── Spotify: handle OAuth callback or restore token
   var code=params.get('code');
   if(code){
     window.history.replaceState({},'',window.location.pathname);
@@ -2500,11 +2681,68 @@ function _syncVizPanel(){/* no-op, now fullscreen */}
   } else {
     var saved=localStorage.getItem('sp_token');
     var exp=parseInt(localStorage.getItem('sp_token_exp')||'0');
-    if(saved&&Date.now()<exp){spToken=saved;}
+    if(saved&&Date.now()<exp){spToken=saved;initSpotifyPlayer();}
     else if(localStorage.getItem('sp_refresh')){await refreshSpotifyToken();}
   }
+
   renderSBSaved();
 })();
 </script>
+
+<!-- SHARE MODAL -->
+<div id="share-modal" style="display:none"><div class="modal-backdrop" onclick="closeModal('share-modal')"><div class="sm-modal" style="max-width:500px;padding:24px;" onclick="event.stopPropagation()">
+  <h3 style="font-family:'Syne',sans-serif;font-size:1.3rem;margin-bottom:8px;">🔗 Share PlaylistDNA</h3>
+  <p style="font-size:.8rem;color:var(--text2);line-height:1.7;margin-bottom:16px;">Generate a link that pre-fills Spotify credentials for your friends. They just click the link, approve Spotify, and they're in — no setup needed.</p>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+    <div id="share-proxy-status" style="padding:10px 14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);font-size:.8rem;"></div>
+    <label id="share-key-option" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2);border-radius:8px;cursor:pointer;border:1px solid var(--border);">
+      <input type="checkbox" id="share-include-key" style="accent-color:var(--sp);width:16px;height:16px;" />
+      <div>
+        <div style="font-size:.82rem;font-weight:600;">Include Anthropic API key in link</div>
+        <div style="font-size:.73rem;color:var(--muted);">Only needed if you're NOT using a proxy. ⚠️ Anyone with the link can use your key.</div>
+      </div>
+    </label>
+  </div>
+  <div id="share-link-wrap" style="display:none;margin-bottom:14px;">
+    <div style="font-size:.72rem;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Your invite link</div>
+    <div style="display:flex;gap:8px;">
+      <input type="text" id="share-link-output" readonly style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:.75rem;font-family:monospace;color:var(--text);outline:none;" />
+      <button onclick="copyShareLink()" style="background:var(--sp);color:#000;border:none;cursor:pointer;font-weight:700;padding:8px 16px;border-radius:8px;font-family:'Space Grotesk',sans-serif;font-size:.8rem;white-space:nowrap;">Copy</button>
+    </div>
+    <div style="font-size:.7rem;color:var(--muted);margin-top:6px;">Link expires when your Spotify credentials change. Friends' data stays private in their own browser.</div>
+  </div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;">
+    <button onclick="closeModal('share-modal')" style="background:none;border:1px solid var(--border);color:var(--text2);cursor:pointer;padding:8px 16px;border-radius:99px;font-family:'Space Grotesk',sans-serif;font-size:.82rem;">Close</button>
+    <button onclick="generateShareLink()" style="background:var(--sp);color:#000;border:none;cursor:pointer;font-weight:700;padding:8px 20px;border-radius:99px;font-family:'Space Grotesk',sans-serif;font-size:.82rem;">Generate Link</button>
+  </div>
+</div></div></div>
+
+<!-- EXPORTIFY GUIDE MODAL -->
+<div id="exportify-modal" style="display:none"><div class="modal-backdrop" onclick="closeModal('exportify-modal')"><div class="sm-modal" style="max-width:460px;padding:24px;" onclick="event.stopPropagation()">
+  <h3 style="font-family:'Syne',sans-serif;font-size:1.3rem;margin-bottom:12px;">📤 Get Your Playlist CSV</h3>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
+    <div style="display:flex;gap:12px;align-items:flex-start;">
+      <div style="width:24px;height:24px;border-radius:50%;background:var(--sp);color:#000;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0;">1</div>
+      <div style="font-size:.82rem;color:var(--text2);line-height:1.6;">Go to <strong><a href="https://exportify.net" target="_blank" style="color:var(--blue)">exportify.net ↗</a></strong> — it's free and only reads your playlist names</div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:flex-start;">
+      <div style="width:24px;height:24px;border-radius:50%;background:var(--sp);color:#000;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0;">2</div>
+      <div style="font-size:.82rem;color:var(--text2);line-height:1.6;">Click <strong>Log in with Spotify</strong>, then find your playlist</div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:flex-start;">
+      <div style="width:24px;height:24px;border-radius:50%;background:var(--sp);color:#000;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0;">3</div>
+      <div style="font-size:.82rem;color:var(--text2);line-height:1.6;">Click <strong>Export</strong> — saves a .csv file to your downloads</div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:flex-start;">
+      <div style="width:24px;height:24px;border-radius:50%;background:var(--sp);color:#000;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0;">4</div>
+      <div style="font-size:.82rem;color:var(--text2);line-height:1.6;">Come back here and <strong>drag that .csv file</strong> into the left panel</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;">
+    <button onclick="closeModal('exportify-modal')" style="background:none;border:1px solid var(--border);color:var(--text2);cursor:pointer;padding:8px 16px;border-radius:99px;font-family:'Space Grotesk',sans-serif;font-size:.82rem;">Close</button>
+    <a href="https://exportify.net" target="_blank" style="background:var(--sp);color:#000;border:none;cursor:pointer;font-weight:700;padding:8px 20px;border-radius:99px;font-family:'Space Grotesk',sans-serif;font-size:.82rem;text-decoration:none;display:inline-flex;align-items:center;">Open Exportify ↗</a>
+  </div>
+</div></div></div>
+
 </body>
 </html>
