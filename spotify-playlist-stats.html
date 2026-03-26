@@ -3208,26 +3208,18 @@ function renderRiverFlow(){
       var isPlay=(colName==='gender'&&n.key===playingGender)||(colName==='genre'&&n.key===playingGenre)||(colName==='time'&&n.key===playingTime);
       var h=n.y2-n.y1;
       var alpha=isPlay?1:isSel?0.95:isAnySel()?0.55:0.85;
-      var strokeAttr=isPlay?(' stroke="'+col+'" stroke-width="2.5"'):isSel?(' stroke="'+col+'" stroke-width="1.5"'):'';
+      var strokeAttr=isSel?(' stroke="'+col+'" stroke-width="1.5"'):'';
       var nodeId='rn-'+colName+'-'+n.key.replace(/[^a-zA-Z0-9]/g,'_');
 
       html+='<g id="'+nodeId+'" data-col="'+colName+'" data-key="'+n.key.replace(/"/g,'&quot;')+'" style="cursor:pointer"'+(isPlay?' class="river-node-playing"':'')+' >';
       html+='<rect x="'+x+'" y="'+n.y1+'" width="'+colW+'" height="'+h+'" rx="6"'
         +' fill="'+col+'" opacity="'+alpha+'"'+strokeAttr+'/>';
       if(isPlay){
-        if(h>=16){
-          // Pulsing border for nodes tall enough to show it cleanly
-          html+='<rect x="'+(x-2)+'" y="'+(n.y1-2)+'" width="'+(colW+4)+'" height="'+(h+4)+'" rx="8"'
-            +' fill="none" stroke="'+col+'" stroke-width="2" opacity="0.8">'
-            +'<animate attributeName="stroke-opacity" values="0.3;0.9;0.3" dur="1.6s" repeatCount="indefinite"/>'
-            +'</rect>';
-        } else {
-          // Tiny node — just a glowing dot above it
-          html+='<circle cx="'+(x+colW/2)+'" cy="'+(n.y1-8)+'" r="5" fill="'+col+'" opacity="0.9">'
-            +'<animate attributeName="r" values="4;7;4" dur="1.4s" repeatCount="indefinite"/>'
-            +'<animate attributeName="opacity" values="0.6;1;0.6" dur="1.4s" repeatCount="indefinite"/>'
-            +'</circle>';
-        }
+        // Bright fill pulse — fully contained inside the node rect, no bleed
+        html+='<rect x="'+x+'" y="'+n.y1+'" width="'+colW+'" height="'+h+'" rx="6"'
+          +' fill="#fff" pointer-events="none">'
+          +'<animate attributeName="opacity" values="0;0.18;0" dur="1.6s" repeatCount="indefinite"/>'
+          +'</rect>';
       }
       var label=n.key;
       // Always show label — scale font to fit
