@@ -1357,7 +1357,7 @@ async function loadSpPlaylists() {
     return;
   }
   var all = [];
-  var url = 'https://api.spotify.com/v1/me/playlists?limit=50&fields=next,items(id,name,images,tracks,owner(display_name),collaborative,public)';
+  var url = 'https://api.spotify.com/v1/me/playlists?limit=50';
   var attempts = 0;
   while (url && attempts < 20) {
     attempts++;
@@ -1451,11 +1451,14 @@ async function importSelectedPlaylist() {
 
     // ── Step 1: Fetch tracks (pages of 100, no fields filter)
     var items = [];
-    var url = 'https://api.spotify.com/v1/playlists/' + pl.id + '/tracks?limit=100';
+    var url = 'https://api.spotify.com/v1/playlists/' + pl.id + '/tracks?limit=50&market=from_token';
     while (url) {
       var r = await fetch(url, { headers: { 'Authorization': 'Bearer ' + spToken } });
-      if (r.status === 403) throw new Error('This playlist is private or restricted. Try one of your own playlists.');
-      if (!r.ok) throw new Error('Spotify error ' + r.status);
+      if (!r.ok) {
+        var errBody = '';
+        try { var ej = await r.clone().json(); errBody = JSON.stringify(ej); } catch(e2) { try { errBody = await r.text(); } catch(e3){} }
+        throw new Error('Spotify ' + r.status + ': ' + errBody.slice(0,200));
+      }
       var d = await r.json();
       items = items.concat((d.items||[]).filter(function(i){ return i&&i.track&&i.track.name&&!i.is_local; }));
       url = d.next || null;
