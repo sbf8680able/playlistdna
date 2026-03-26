@@ -1457,45 +1457,58 @@ async function importSelectedPlaylist() {
     setSpImportProgress('Fetching '+pl.count+' tracks from Spotify…', 5);
     // 1. Fetch all tracks in pages of 100
     var items = [];
-    var url = 'https://api.spotify.com/v1/playlists/' + pl.id + '/tracks?limit=100&fields=next,items(track(id,name,duration_ms,album(name,images,release_date),artists(name),external_ids,uri))';
+    // 1. Fetch all tracks — simple URL, no fields restriction that can fail
+    var items = [];
+    var url = 'https://api.spotify.com/v1/playlists/' + pl.id + '/tracks?limit=100';
     var fetched = 0;
     while (url) {
       var r = await fetch(url, { headers: { 'Authorization': 'Bearer ' + spToken } });
-      if (!r.ok) throw new Error('Failed to fetch tracks');
+      if (!r.ok) {
+        var errText = await r.text();
+        throw new Error('Spotify returned ' + r.status + ': ' + errText.slice(0,100));
+      }
       var d = await r.json();
-      items = items.concat((d.items || []).filter(function(i) { return i.track && i.track.name; }));
+      var valid = (d.items || []).filter(function(i) { return i && i.track && i.track.name && !i.is_local; });
+      items = items.concat(valid);
       fetched = items.length;
-      setSpImportProgress('Fetching tracks… ' + fetched + ' / ' + pl.count, Math.min(40, 5 + (fetched / Math.max(pl.count, 1)) * 35));
       url = d.next || null;
+      setSpImportProgress('Fetching tracks… ' + fetched + (pl.count ? ' / ' + pl.count : ''), Math.min(45, 5 + fetched / Math.max(pl.count || fetched, 1) * 40));
     }
-    setSpImportProgress('Fetching artist genres…', 42);
 
-    // 2. Fetch artist genre tags in batches (Spotify /artists endpoint, 50 per call)
-    var artistIds = [...new Set(items.map(function(i) { return i.track.artists[0] && i.track.artists[0].id; }).filter(Boolean))];
+    if (!items.length) throw new Error('No playable tracks found in this playlist');
+
+    setSpImportProgress('Fetching artist genres…', 48);
+
+    // 2. Fetch artist genres in parallel batches of 50 (much faster)
+    var artistIds = [];
+    var seenIds = {};
+    items.forEach(function(i) {
+      var id = i.track.artists && i.track.artists[0] && i.track.artists[0].id;
+      if (id && !seenIds[id]) { seenIds[id] = true; artistIds.push(id); }
+    });
     var artistGenreMap = {};
+    var genreBatches = [];
     for (var ai = 0; ai < artistIds.length; ai += 50) {
-      var batch = artistIds.slice(ai, ai + 50);
-      try {
-        var ar = await fetch('https://api.spotify.com/v1/artists?ids=' + batch.join(','), { headers: { 'Authorization': 'Bearer ' + spToken } });
-        if (ar.ok) {
-          var ad = await ar.json();
-          (ad.artists || []).forEach(function(a) { if (a) artistGenreMap[a.id] = a.genres || []; });
-        }
-      } catch(e) {}
-      setSpImportProgress('Fetching genres… ' + Math.min(ai + 50, artistIds.length) + ' / ' + artistIds.length, 42 + (ai / artistIds.length) * 18);
+      genreBatches.push(artistIds.slice(ai, ai + 50));
     }
+    await Promise.all(genreBatches.map(function(batch) {
+      return fetch('https://api.spotify.com/v1/artists?ids=' + batch.join(','), { headers: { 'Authorization': 'Bearer ' + spToken } })
+        .then(function(ar) { return ar.ok ? ar.json() : {artists:[]}; })
+        .then(function(ad) { (ad.artists||[]).forEach(function(a) { if(a) artistGenreMap[a.id] = a.genres||[]; }); })
+        .catch(function(){});
+    }));
 
-    // 3. Build track objects matching the same shape as parseCSV output
+    // 3. Build track objects
     var tracks = items.map(function(item) {
       var t = item.track;
-      var artistId = t.artists[0] && t.artists[0].id;
+      var artistId = t.artists && t.artists[0] && t.artists[0].id;
       var genreTags = artistId ? (artistGenreMap[artistId] || []) : [];
       var releaseDate = t.album && t.album.release_date ? t.album.release_date : '';
       var year = releaseDate ? parseInt(releaseDate.split('-')[0]) : null;
       var imageUrl = t.album && t.album.images && t.album.images[0] ? t.album.images[0].url : '';
       return {
         name: t.name,
-        artistName: t.artists.map(function(a) { return a.name; }).join(', '),
+        artistName: (t.artists||[]).map(function(a) { return a.name; }).join(', '),
         album: t.album ? t.album.name : '',
         durationMs: t.duration_ms || 0,
         genres: genreTags,
