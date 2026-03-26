@@ -352,12 +352,16 @@ html,body{height:100%;overflow-x:hidden;}
 .main-content.lyrics-open{margin-right:320px;}
 #dashboard{display:block;}
 .dash-body{padding:8px 16px 0;}
-#tab-charts{display:none;}
+#tab-river{display:none;}
+#tab-nexus{display:none;}
 #tab-songs{display:none;}
-#tab-insights{display:none;}
-#tab-charts.active{display:block!important;}
-#tab-songs.active{display:block!important;}
-#tab-insights.active{display:block!important;}
+#tab-river.active,#tab-nexus.active,#tab-songs.active{display:block!important;}
+@keyframes flowAnim{to{stroke-dashoffset:-40}}
+@keyframes glowPulse{0%,100%{opacity:.7;filter:blur(0px)}50%{opacity:1;filter:blur(1px)}}
+@keyframes nodeGlow{0%,100%{opacity:.9}50%{opacity:1}}
+@keyframes hueRotate{from{filter:hue-rotate(0deg)}to{filter:hue-rotate(360deg)}}
+.river-flow-active{animation:flowAnim 2s linear infinite;}
+.river-node-playing{animation:nodeGlow .8s ease-in-out infinite;}
 .insights-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;padding:4px 0;}
 .ins-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;}
 .ins-card-title{font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:7px;}
@@ -699,69 +703,22 @@ html,body{height:100%;overflow-x:hidden;}
         <div class="kpi"><div class="kpi-accent" style="background:var(--purple)"></div><div class="kpi-label">Years Covered</div><div class="kpi-value" id="kpi-coverage">—</div><div class="kpi-sub">years with ≥1 song</div></div>
       </div>
       <div class="tab-bar">
-        <button class="tab active" onclick="switchTab('charts')">📊 Charts</button>
+        <button class="tab active" onclick="switchTab('river')">≋ River</button>
+        <button class="tab" onclick="switchTab('nexus')">🌐 Nexus</button>
         <button class="tab" onclick="switchTab('songs')">🎵 Songs</button>
-        <button class="tab" onclick="switchTab('insights')">🔬 Insights</button>
       </div>
-      <div id="tab-charts" class="active">
-        <div class="charts-grid">
-          <div class="chart-panel">
-            <div class="chart-title">Artist Gender Diversity</div>
-            <div class="chart-sub">Click row to explore · Filter below</div>
-            <div class="cf-bar">
-              <span class="cf-label">Filter:</span>
-              <select class="cf-sel" id="gf-genre" onchange="renderGenderBars()"><option value="">All Genres</option></select>
-              <select class="cf-sel" id="gf-year" onchange="renderGenderBars()"><option value="">All Years</option></select>
-              <button class="cf-clr" onclick="clearCF('gf')">✕</button>
-              <span class="cf-cnt" id="gf-cnt"></span>
-            </div>
-            <div class="gender-rows" id="gender-bars"></div>
-            <div class="gender-hint">One song per artist. Groups by lead vocalist. Click to explore.</div>
-          </div>
-          <div class="chart-panel">
-            <div class="chart-title">Genre Breakdown</div>
-            <div class="chart-sub">Click tile to explore · Hover for ▶ · <span id="other-note" style="color:var(--muted)"></span></div>
-            <div class="cf-bar">
-              <span class="cf-label">Filter:</span>
-              <select class="cf-sel" id="gnf-gender" onchange="renderGenreTiles()"><option value="">All Genders</option></select>
-              <select class="cf-sel" id="gnf-year" onchange="renderGenreTiles()"><option value="">All Years</option></select>
-              <button class="cf-clr" onclick="clearCF('gnf')">✕</button>
-              <span class="cf-cnt" id="gnf-cnt"></span>
-            </div>
-            <div class="genre-tiles" id="genre-tiles"></div>
-          </div>
-          <div class="chart-panel wide year-panel">
-            <div class="chart-title">Release Timeline</div>
-            <div class="chart-sub">Click any bar · Color = count · <span id="lookup-note" style="color:var(--green)"></span></div>
-            <div class="cf-bar">
-              <span class="cf-label">Filter:</span>
-              <select class="cf-sel" id="yf-gender" onchange="renderYearChart()"><option value="">All Genders</option></select>
-              <select class="cf-sel" id="yf-genre" onchange="renderYearChart()"><option value="">All Genres</option></select>
-              <button class="cf-clr" onclick="clearCF('yf')">✕</button>
-              <span class="cf-cnt" id="yf-cnt"></span>
-            </div>
-            <div class="year-stats" id="year-stats"></div>
-            <div class="year-chart-wrap"><canvas id="year-chart"></canvas></div>
-            <div class="lookup-row">
-              <span>🔍 Verify dates outside:</span>
-              <select id="lookup-decade-start" class="cf-sel" onchange="updateLookupCount()">
-                <option value="1950">before 1950</option><option value="1960">before 1960</option>
-                <option value="1970">before 1970</option><option value="1980">before 1980</option>
-                <option value="1990" selected>before 1990</option><option value="2000">before 2000</option><option value="2010">before 2010</option>
-              </select>
-              <span style="color:var(--muted)">or after</span>
-              <select id="lookup-decade-end" class="cf-sel" onchange="updateLookupCount()">
-                <option value="1979">1979</option><option value="1989">1989</option>
-                <option value="1999" selected>1999</option><option value="2009">2009</option><option value="2019">2019</option><option value="2099">never</option>
-              </select>
-              <button class="lookup-btn" id="lookup-btn" onclick="lookupOriginalDates()">Check <span id="lookup-count">?</span> tracks</button>
-            </div>
-            <div class="lookup-status" id="lookup-status"></div>
-            <div class="wiki-row">
-              <!-- wiki buttons moved to sidebar -->
-            </div>
+      <div id="tab-river" class="active" style="padding:0 0 12px;">
+        <div id="river-panel" style="position:relative;min-height:500px;">
+          <canvas id="river-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity .5s;"></canvas>
+          <svg id="river-svg" width="100%" viewBox="0 0 900 520" style="display:block;cursor:default;" preserveAspectRatio="xMidYMid meet"></svg>
+          <div id="river-legend" style="display:flex;gap:16px;flex-wrap:wrap;padding:8px 16px 0;font-size:11px;color:var(--text2);"></div>
+          <div id="river-selection" style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 16px 4px;min-height:34px;align-items:center;">
+            <span style="font-size:11px;color:var(--muted);">Shift+click to multi-select · click to play or explore</span>
           </div>
         </div>
+      </div>
+      <div id="tab-nexus" style="padding:0 0 12px;">
+        <svg id="nexus-svg" width="100%" viewBox="0 0 900 560" style="display:block;cursor:default;" preserveAspectRatio="xMidYMid meet"></svg>
       </div>
       <div id="tab-songs">
         <div class="chart-panel songs-panel">
@@ -2204,6 +2161,11 @@ function highlightPlayingTrack(track){
   });
   document.querySelectorAll('#genre-tiles .genre-tile').forEach(function(tile){var oc=tile.getAttribute('onclick')||'';if(oc.indexOf(track.mainGenre)>=0)tile.classList.add('sp-active-tile');});
   updateYearBarOverlay(track);
+  // Update River and Nexus if visible
+  var tabRiver=document.getElementById('tab-river');
+  var tabNexus=document.getElementById('tab-nexus');
+  if(tabRiver&&tabRiver.classList.contains('active'))renderRiverFlow();
+  if(tabNexus&&tabNexus.classList.contains('active'))renderNexusWeb();
 }
 
 function toggleLyrics(){
@@ -2310,6 +2272,7 @@ function updateAllKPIs(){
   document.getElementById('topbar-meta').textContent=allTracks.length+' tracks · '+uA+' artists · '+new Set(allG).size+' unique genres';
   populateCFSelects();
   renderGenderBars();renderGenreTiles();renderYearChart();
+  setTimeout(renderRiverFlow,50);
   populateFilters();applyFilters();
   // Refresh highlights after all charts have re-rendered
   setTimeout(refreshHighlights, 500);
@@ -2875,18 +2838,429 @@ function insListRow(rank,name,meta,pct){
   +'</div>';
 }
 
+// ══ RIVER FLOW & NEXUS ════════════════════════
+var _riverSel={gender:new Set(),genre:new Set(),time:new Set()};
+var _riverDone=false, _nexusDone=false;
+
+function riverSelKey(col,val){return col+'|'+val;}
+function riverToggleSel(col,val,shiftHeld){
+  if(!shiftHeld){
+    // clear all, set this one
+    _riverSel.gender.clear();_riverSel.genre.clear();_riverSel.time.clear();
+    _riverSel[col].add(val);
+  } else {
+    if(_riverSel[col].has(val))_riverSel[col].delete(val);
+    else _riverSel[col].add(val);
+  }
+  renderRiverFlow();
+  riverUpdateSelUI();
+}
+function riverClearSel(){_riverSel.gender.clear();_riverSel.genre.clear();_riverSel.time.clear();renderRiverFlow();riverUpdateSelUI();}
+
+function riverGetFiltered(){
+  var tracks=allTracks;
+  if(_riverSel.gender.size)tracks=tracks.filter(function(t){return _riverSel.gender.has(t.gender);});
+  if(_riverSel.genre.size)tracks=tracks.filter(function(t){return _riverSel.genre.has(t.mainGenre);});
+  if(_riverSel.time.size){
+    tracks=tracks.filter(function(t){
+      // time can be decade (e.g. "2010s") or year (e.g. "2013")
+      return _riverSel.time.has(String(t.year))||
+             _riverSel.time.has(String(Math.floor(t.year/10)*10)+'s');
+    });
+  }
+  return tracks;
+}
+
+function riverMakeChip(col,v,bg,border,textColor){
+  var sp=document.createElement('span');
+  sp.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;background:'+bg+';border:1px solid '+border+';font-size:11px;font-weight:600;color:'+textColor;
+  sp.textContent=v+' ';
+  var x=document.createElement('span');
+  x.textContent='✕';x.style.cssText='cursor:pointer;opacity:.6';
+  x.addEventListener('click',function(){riverToggleSel(col,v,false);});
+  sp.appendChild(x);
+  return sp;
+}
+function riverUpdateSelUI(){
+  var sel=document.getElementById('river-selection');
+  if(!sel)return;
+  sel.innerHTML='';
+  var hasAny=_riverSel.gender.size||_riverSel.genre.size||_riverSel.time.size;
+  _riverSel.gender.forEach(function(v){sel.appendChild(riverMakeChip('gender',v,'rgba(29,185,84,.15)','rgba(29,185,84,.3)','var(--sp)'));});
+  _riverSel.genre.forEach(function(v){sel.appendChild(riverMakeChip('genre',v,'rgba(90,143,214,.15)','rgba(90,143,214,.3)','#5C8FD6'));});
+  _riverSel.time.forEach(function(v){sel.appendChild(riverMakeChip('time',v,'rgba(155,125,212,.15)','rgba(155,125,212,.3)','#9B7DD4'));});
+  if(hasAny){
+    var filtered=riverGetFiltered();
+    var clr=document.createElement('button');
+    clr.textContent='Clear';clr.style.cssText='font-size:11px;padding:3px 8px;border-radius:99px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;margin-left:4px;';
+    clr.addEventListener('click',riverClearSel);
+    sel.appendChild(clr);
+    var play=document.createElement('button');
+    play.textContent='▶ Play '+filtered.length;play.style.cssText='font-size:11px;padding:3px 12px;border-radius:99px;border:none;background:var(--sp);color:#000;font-weight:700;cursor:pointer;margin-left:6px;';
+    play.addEventListener('click',riverPlaySelected);
+    sel.appendChild(play);
+  } else {
+    var hint=document.createElement('span');
+    hint.style.cssText='font-size:11px;color:var(--muted)';
+    hint.textContent='Shift+click to multi-select · click a node to explore or use ▶';
+    sel.appendChild(hint);
+  }
+}
+
+function riverPlaySelected(){
+  var tracks=riverGetFiltered().filter(function(t){return t.spotifyUri;});
+  if(!tracks.length){alert('No playable tracks in selection.');return;}
+  var q=tracks.slice();
+  for(var i=q.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=q[i];q[i]=q[j];q[j]=tmp;}
+  spQueue=q;spCurrentTrackIdx=0;spShuffled=true;spQueueSavedIdx=currentSavedIdx;
+  document.getElementById('pb-shuffle').classList.add('sp-active');
+  spPlayFromQueue(0);
+}
+
+function riverPlayNode(col,val,e){
+  if(e)e.stopPropagation();
+  _riverSel.gender.clear();_riverSel.genre.clear();_riverSel.time.clear();
+  _riverSel[col].add(val);
+  riverPlaySelected();
+}
+
+function riverNodeClick(col,val,e){
+  riverToggleSel(col,val,e&&e.shiftKey);
+}
+
+function renderRiverFlow(){
+  var svg=document.getElementById('river-svg');
+  if(!svg)return;
+  var W=900,H=520;
+
+  // Determine if we show decade or year for time column
+  var years=[...new Set(allTracks.map(function(t){return t.year;}).filter(Boolean))];
+  var decades=[...new Set(years.map(function(y){return Math.floor(y/10)*10;}))];
+  var useDecade=decades.length>1;
+
+  // Build data
+  var genderMap={},genreMap={},timeMap={};
+  allTracks.forEach(function(t){
+    genderMap[t.gender]=(genderMap[t.gender]||0)+1;
+    genreMap[t.mainGenre]=(genreMap[t.mainGenre]||0)+1;
+    var tk=useDecade?(Math.floor(t.year/10)*10)+'s':String(t.year);
+    if(t.year)timeMap[tk]=(timeMap[tk]||0)+1;
+  });
+
+  var genders=Object.entries(genderMap).filter(function(e){return e[0]!=='unknown'||e[1]>0;}).sort(function(a,b){return b[1]-a[1];});
+  var genres=Object.entries(genreMap).sort(function(a,b){return b[1]-a[1];}).slice(0,8);
+  var times=Object.entries(timeMap).sort(function(a,b){return a[0].localeCompare(b[0]);});
+
+  var TOTAL=allTracks.length||1;
+  var pad=40,colW=100,gap=(W-pad*2-colW*3)/2;
+  var cols=[pad,pad+colW+gap,pad+colW*2+gap*2];
+  var rowH=H-80;
+
+  // Get currently playing track
+  var playing=spCurrentTrackIdx>=0&&spQueue[spCurrentTrackIdx]?spQueue[spCurrentTrackIdx]:null;
+  var playingGender=playing?playing.gender:null;
+  var playingGenre=playing?playing.mainGenre:null;
+  var playingTime=playing&&playing.year?(useDecade?(Math.floor(playing.year/10)*10)+'s':String(playing.year)):null;
+
+  // Gender colors
+  var gCols={male:'#5C8FD6',female:'#D45C8C','female-lead':'#C060B8','male-lead':'#4070C8',group:'#D4A85C',unknown:'#9A9A9A'};
+
+  // Genre colors (use GENRE_MAP if available)
+  function genreColor(g){
+    var gm=window.GENRE_MAP&&window.GENRE_MAP[g];
+    return gm?gm.color:'#9A9A9A';
+  }
+  var timeColors=['#9B7DD4','#5C8FD6','#5CB87C','#D4A85C','#D45C8C'];
+
+  // Layout nodes in columns
+  function layoutNodes(items,totalKey){
+    var avail=rowH-20;
+    var totalCount=items.reduce(function(s,e){return s+e[1];},0)||1;
+    var y=50,nodes=[];
+    items.forEach(function(e){
+      var h=Math.max(18,(e[1]/totalCount)*avail);
+      nodes.push({key:e[0],count:e[1],y1:y,y2:y+h});
+      y+=h+6;
+    });
+    return nodes;
+  }
+
+  var genderNodes=layoutNodes(genders,'gender');
+  var genreNodes=layoutNodes(genres,'genre');
+  var timeNodes=layoutNodes(times,'time');
+
+  // Check selections
+  function isSelected(col,key){
+    if(!_riverSel[col].size)return false;
+    return _riverSel[col].has(key);
+  }
+  function isAnySel(){return _riverSel.gender.size||_riverSel.genre.size||_riverSel.time.size;}
+
+  // Build SVG
+  var html='<defs>';
+  // Flow gradients for gender→genre connections
+  genders.forEach(function(g){
+    var col=gCols[g[0]]||'#888';
+    html+='<linearGradient id="rg-g'+g[0].replace(/[^a-z]/g,'')+'" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="'+col+'" stop-opacity="0.6"/><stop offset="100%" stop-color="'+col+'" stop-opacity="0.15"/></linearGradient>';
+  });
+  html+='</defs>';
+
+  // ── FLOWS (gender → genre)
+  genders.forEach(function(g){
+    var gn=genderNodes.find(function(n){return n.key===g[0];});
+    if(!gn)return;
+    genres.forEach(function(genre){
+      var genn=genreNodes.find(function(n){return n.key===genre[0];});
+      if(!genn)return;
+      // Count tracks matching both
+      var cnt=allTracks.filter(function(t){return t.gender===g[0]&&t.mainGenre===genre[0];}).length;
+      if(!cnt)return;
+      var frac1=cnt/g[1],frac2=cnt/genre[1];
+      var h1=Math.max(2,(gn.y2-gn.y1)*frac1);
+      var h2=Math.max(2,(genn.y2-genn.y1)*frac2);
+      var x1=cols[0]+colW,x2=cols[1];
+      var y1m=(gn.y1+gn.y2)/2,y2m=(genn.y1+genn.y2)/2;
+
+      var isPlay=(playing&&playing.gender===g[0]&&playing.mainGenre===genre[0]);
+      var selActive=isAnySel()&&(isSelected('gender',g[0])||isSelected('genre',genre[0]));
+      var alpha=isPlay?0.85:selActive?0.65:isAnySel()?0.08:0.22;
+      var col=gCols[g[0]]||'#888';
+      var dashAttr=isPlay?'stroke-dasharray="12 8" class="river-flow-active"':'';
+
+      html+='<path d="M'+x1+' '+(y1m-h1/2)+' C'+(x1+80)+' '+(y1m-h1/2)+' '+(x2-80)+' '+(y2m-h2/2)+' '+x2+' '+(y2m-h2/2)
+        +' L'+x2+' '+(y2m+h2/2)+' C'+(x2-80)+' '+(y2m+h2/2)+' '+(x1+80)+' '+(y1m+h1/2)+' '+x1+' '+(y1m+h1/2)+'Z"'
+        +' fill="'+col+'" opacity="'+alpha+'" '+dashAttr+'/>';
+    });
+  });
+
+  // ── FLOWS (genre → time)
+  genres.forEach(function(genre){
+    var genn=genreNodes.find(function(n){return n.key===genre[0];});
+    if(!genn)return;
+    times.forEach(function(tm,ti){
+      var tn=timeNodes.find(function(n){return n.key===tm[0];});
+      if(!tn)return;
+      var cnt=allTracks.filter(function(t){
+        var tk=useDecade?(Math.floor(t.year/10)*10)+'s':String(t.year);
+        return t.mainGenre===genre[0]&&tk===tm[0];
+      }).length;
+      if(!cnt)return;
+      var frac1=cnt/genre[1],frac2=cnt/tm[1];
+      var h1=Math.max(2,(genn.y2-genn.y1)*frac1);
+      var h2=Math.max(2,(tn.y2-tn.y1)*frac2);
+      var x1=cols[1]+colW,x2=cols[2];
+      var y1m=(genn.y1+genn.y2)/2,y2m=(tn.y1+tn.y2)/2;
+
+      var isPlay=(playing&&playing.mainGenre===genre[0]&&playingTime===tm[0]);
+      var selActive=isAnySel()&&(isSelected('genre',genre[0])||isSelected('time',tm[0]));
+      var alpha=isPlay?0.85:selActive?0.65:isAnySel()?0.08:0.22;
+      var col=genreColor(genre[0]);
+      var dashAttr=isPlay?'stroke-dasharray="12 8" class="river-flow-active"':'';
+      html+='<path d="M'+x1+' '+(y1m-h1/2)+' C'+(x1+80)+' '+(y1m-h1/2)+' '+(x2-80)+' '+(y2m-h2/2)+' '+x2+' '+(y2m-h2/2)
+        +' L'+x2+' '+(y2m+h2/2)+' C'+(x2-80)+' '+(y2m+h2/2)+' '+(x1+80)+' '+(y1m+h1/2)+' '+x1+' '+(y1m+h1/2)+'Z"'
+        +' fill="'+col+'" opacity="'+alpha+'" '+dashAttr+'/>';
+    });
+  });
+
+  // ── COLUMN NODES
+  function renderCol(nodes,colIdx,colName,getColor,selSet){
+    nodes.forEach(function(n){
+      var x=cols[colIdx];
+      var col=getColor(n.key);
+      var isSel=selSet.has(n.key);
+      var isPlay=(colName==='gender'&&n.key===playingGender)||(colName==='genre'&&n.key===playingGenre)||(colName==='time'&&n.key===playingTime);
+      var h=n.y2-n.y1;
+      var alpha=isPlay?1:isSel?0.95:isAnySel()?0.55:0.85;
+      var strokeAttr=isPlay?(' stroke="'+col+'" stroke-width="2.5"'):isSel?(' stroke="'+col+'" stroke-width="1.5"'):'';
+      var nodeId='rn-'+colName+'-'+n.key.replace(/[^a-zA-Z0-9]/g,'_');
+
+      html+='<g id="'+nodeId+'" data-col="'+colName+'" data-key="'+n.key.replace(/"/g,'&quot;')+'" style="cursor:pointer"'+(isPlay?' class="river-node-playing"':'')+' >';
+      html+='<rect x="'+x+'" y="'+n.y1+'" width="'+colW+'" height="'+h+'" rx="6"'
+        +' fill="'+col+'" opacity="'+alpha+'"'+strokeAttr+'/>';
+      if(isPlay){
+        html+='<rect x="'+x+'" y="'+n.y1+'" width="'+colW+'" height="'+h+'" rx="6"'
+          +' fill="'+col+'" opacity="0.3" style="animation:hueRotate 3s linear infinite"/>';
+      }
+      var label=n.key;
+      if(h>22){
+        html+='<text x="'+(x+colW/2)+'" y="'+(n.y1+Math.min(h/2,20))+'" text-anchor="middle" dominant-baseline="central"'
+          +' font-size="'+(h>40?12:10)+'" font-weight="600" fill="#fff" pointer-events="none">'+esc(label.slice(0,12))+'</text>';
+        if(h>40){
+          html+='<text x="'+(x+colW/2)+'" y="'+(n.y1+Math.min(h/2,20)+15)+'" text-anchor="middle" dominant-baseline="central"'
+            +' font-size="10" fill="rgba(255,255,255,.7)" pointer-events="none">'+n.count+'</text>';
+        }
+      }
+      // ▶ Play button
+      var btnY=n.y1+h/2-10;
+      html+='<g data-playcol="'+colName+'" data-playkey="'+n.key.replace(/"/g,'&quot;')+'" style="cursor:pointer">';
+      html+='<rect x="'+(x+colW+4)+'" y="'+btnY+'" width="20" height="20" rx="10" fill="'+col+'" opacity="0.9"/>';
+      html+='<text x="'+(x+colW+14)+'" y="'+(btnY+11)+'" text-anchor="middle" dominant-baseline="central" font-size="8" fill="#fff" pointer-events="none">▶</text>';
+      html+='</g>';
+      html+='</g>';
+    });
+  }
+
+  renderCol(genderNodes,0,'gender',function(k){return gCols[k]||'#888';},_riverSel.gender);
+  renderCol(genreNodes,1,'genre',genreColor,_riverSel.genre);
+  renderCol(timeNodes,2,'time',function(k,i){return timeColors[timeNodes.indexOf(timeNodes.find(function(n){return n.key===k;}))||0]||'#5C8FD6';},_riverSel.time);
+
+  // Column headers
+  var headers=['Gender','Genre',useDecade?'Decade':'Year'];
+  headers.forEach(function(h,i){
+    html+='<text x="'+(cols[i]+colW/2)+'" y="30" text-anchor="middle" font-size="12" font-weight="600" fill="var(--muted)">'+h+'</text>';
+  });
+
+  svg.innerHTML=html;
+  // Wire events via delegation
+  svg.addEventListener('click',function(e){
+    var playG=e.target.closest('[data-playcol]');
+    if(playG){e.stopPropagation();riverPlayNode(playG.getAttribute('data-playcol'),playG.getAttribute('data-playkey'),e);return;}
+    var nodeG=e.target.closest('[data-col]');
+    if(nodeG){riverNodeClick(nodeG.getAttribute('data-col'),nodeG.getAttribute('data-key'),e);}
+  });
+}
+
+// ══ NEXUS WEB ══════════════════════════════════
+function renderNexusWeb(){
+  var svg=document.getElementById('nexus-svg');
+  if(!svg)return;
+  var W=900,H=560,cx=420,cy=270;
+
+  var genderMap={},genreMap={};
+  allTracks.forEach(function(t){
+    genderMap[t.gender]=(genderMap[t.gender]||0)+1;
+    genreMap[t.mainGenre]=(genreMap[t.mainGenre]||0)+1;
+  });
+
+  var genders=Object.entries(genderMap).filter(function(e){return e[0]!=='unknown'||e[1]>3;}).sort(function(a,b){return b[1]-a[1];});
+  var genres=Object.entries(genreMap).sort(function(a,b){return b[1]-a[1];}).slice(0,10);
+  var TOTAL=allTracks.length||1;
+
+  var gCols={male:'#5C8FD6',female:'#D45C8C','female-lead':'#C060B8','male-lead':'#4070C8',group:'#D4A85C',unknown:'#9A9A9A'};
+  function genreColor(g){var gm=window.GENRE_MAP&&window.GENRE_MAP[g];return gm?gm.color:'#9A9A9A';}
+
+  // Genre nodes — inner ring r=140
+  var gR=140;
+  var gNodes=genres.map(function(g,i){
+    var a=(i/genres.length)*Math.PI*2-Math.PI/2;
+    return{name:g[0],count:g[1],x:cx+Math.cos(a)*gR,y:cy+Math.sin(a)*gR,a:a};
+  });
+  // Gender nodes — outer ring r=250
+  var dR=250;
+  var dNodes=genders.map(function(d,i){
+    var a=(i/genders.length)*Math.PI*2-Math.PI/2;
+    return{name:d[0],count:d[1],x:cx+Math.cos(a)*dR,y:cy+Math.sin(a)*dR,a:a};
+  });
+
+  var playing=spCurrentTrackIdx>=0&&spQueue[spCurrentTrackIdx]?spQueue[spCurrentTrackIdx]:null;
+
+  var html='';
+
+  // Year ring (outermost, r=300)
+  var years=Object.entries(function(){var m={};allTracks.forEach(function(t){if(t.year)m[t.year]=(m[t.year]||0)+1;});return m;}()).sort(function(a,b){return a[0]-b[0];});
+  var yMax=Math.max.apply(null,years.map(function(e){return e[1];}));
+  var yR=300;
+  var aStart=-Math.PI/2,yearArcGap=Math.PI*2*0.02/Math.max(years.length,1);
+  years.forEach(function(yr){
+    var sweep=(yr[1]/TOTAL)*Math.PI*2*0.94;
+    var aEnd=aStart+sweep;
+    var x1=cx+Math.cos(aStart)*yR,y1=cy+Math.sin(aStart)*yR;
+    var x2=cx+Math.cos(aEnd)*yR,y2=cy+Math.sin(aEnd)*yR;
+    var big=sweep>Math.PI?1:0;
+    var isPlay=playing&&String(playing.year)===String(yr[0]);
+    var alpha=isPlay?1:0.25+0.45*(yr[1]/yMax);
+    var strokeW=isPlay?14:8;
+    html+='<path d="M '+x1+' '+y1+' A '+yR+' '+yR+' 0 '+big+' 1 '+x2+' '+y2+'"'
+      +' fill="none" stroke="#5C8FD6" stroke-width="'+strokeW+'" opacity="'+alpha+'"'
+      +' stroke-linecap="round" style="cursor:pointer"'
+      +' data-ntype="year" data-nval="'+yr[0]+'" />';
+    if(yr[1]>=8){
+      var am=aStart+sweep/2;
+      html+='<text x="'+(cx+Math.cos(am)*(yR+18))+'" y="'+(cy+Math.sin(am)*(yR+18))+'"'
+        +' text-anchor="middle" dominant-baseline="central" font-size="9" fill="var(--muted)">'+yr[0]+'</text>';
+    }
+    aStart=aEnd+yearArcGap;
+  });
+
+  // Connections: genre → gender
+  genres.forEach(function(g,gi){
+    var gn=gNodes[gi];
+    genders.forEach(function(d){
+      var dn=dNodes.find(function(n){return n.name===d[0];});
+      if(!dn)return;
+      var cnt=allTracks.filter(function(t){return t.mainGenre===g[0]&&t.gender===d[0];}).length;
+      if(!cnt)return;
+      var w=Math.max(0.5,cnt/12);
+      var alpha=Math.min(0.65,0.08+cnt/35);
+      var isPlay=playing&&playing.mainGenre===g[0]&&playing.gender===d[0];
+      var col=genreColor(g[0]);
+      var dashAttr=isPlay?'stroke-dasharray="10 6" class="river-flow-active"':'';
+      html+='<line x1="'+gn.x+'" y1="'+gn.y+'" x2="'+dn.x+'" y2="'+dn.y+'"'
+        +' stroke="'+col+'" stroke-width="'+(isPlay?w*2.5:w)+'" opacity="'+(isPlay?0.9:alpha)+'" '+dashAttr+'/>';
+    });
+  });
+
+  // Genre nodes (inner)
+  gNodes.forEach(function(g){
+    var r=9+g.count/14;
+    var col=genreColor(g.name);
+    var isPlay=playing&&playing.mainGenre===g.name;
+    var lx=g.x+(g.x<cx?-(r+8):r+8),anchor=g.x<cx?'end':'start';
+    html+='<g data-ntype="genre" data-nval="'+g.name.replace(/"/g,'&quot;')+'" style="cursor:pointer">';
+    html+='<circle cx="'+g.x+'" cy="'+g.y+'" r="'+(r+6)+'" fill="'+col+'" opacity="0.12"/>';
+    html+='<circle cx="'+g.x+'" cy="'+g.y+'" r="'+r+'" fill="'+col+'" opacity="0.92"'+(isPlay?' style="animation:hueRotate 3s linear infinite"':'')+'/>';
+    html+='<text x="'+g.x+'" y="'+(g.y+1)+'" text-anchor="middle" dominant-baseline="central" font-size="9" font-weight="600" fill="#fff" pointer-events="none">'+g.count+'</text>';
+    html+='</g>';
+    html+='<text x="'+lx+'" y="'+(g.y+1)+'" text-anchor="'+anchor+'" dominant-baseline="central" font-size="11" font-weight="500" fill="var(--text)">'+esc(g.name)+'</text>';
+  });
+
+  // Gender nodes (outer)
+  dNodes.forEach(function(d){
+    var r=16+d.count/10;
+    var col=gCols[d.name]||'#888';
+    var isPlay=playing&&playing.gender===d.name;
+    html+='<g data-ntype="gender" data-nval="'+d.name.replace(/"/g,'&quot;')+'" style="cursor:pointer">';
+    html+='<circle cx="'+d.x+'" cy="'+d.y+'" r="'+(r+8)+'" fill="'+col+'" opacity="0.1"/>';
+    html+='<circle cx="'+d.x+'" cy="'+d.y+'" r="'+r+'" fill="'+col+'" opacity="0.25" stroke="'+col+'" stroke-width="2"'+(isPlay?' style="animation:hueRotate 3s linear infinite"':'')+'/>';
+    html+='<text x="'+d.x+'" y="'+(d.y-6)+'" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="600" fill="var(--text)" pointer-events="none">'+d.name.charAt(0).toUpperCase()+d.name.slice(1)+'</text>';
+    html+='<text x="'+d.x+'" y="'+(d.y+10)+'" text-anchor="middle" dominant-baseline="central" font-size="11" fill="var(--muted)" pointer-events="none">'+d.count+'</text>';
+    html+='</g>';
+  });
+
+  // Center
+  html+='<circle cx="'+cx+'" cy="'+cy+'" r="50" fill="var(--surface)" stroke="var(--border)" stroke-width="0.5"/>';
+  html+='<text x="'+cx+'" y="'+(cy-10)+'" text-anchor="middle" dominant-baseline="central" font-size="22" font-weight="600" fill="var(--text)">'+TOTAL+'</text>';
+  html+='<text x="'+cx+'" y="'+(cy+12)+'" text-anchor="middle" dominant-baseline="central" font-size="11" fill="var(--muted)">tracks</text>';
+
+  // Labels: inner ring = genre, outer = gender
+  html+='<text x="'+(cx-gR-15)+'" y="'+(cy-gR-15)+'" font-size="10" fill="var(--muted)">genre</text>';
+  html+='<text x="'+(cx-dR-15)+'" y="'+(cy-dR-15)+'" font-size="10" fill="var(--muted)">gender</text>';
+
+  svg.innerHTML=html;
+  svg.addEventListener('click',function(e){
+    var g=e.target.closest('[data-ntype]');if(!g)return;
+    var t=g.getAttribute('data-ntype'),v=g.getAttribute('data-nval');
+    if(t==='genre')spPlayGenre(v);
+    else if(t==='gender')spPlayByGender(v);
+    else if(t==='year')spPlayByYear(+v);
+  });
+}
+
+// Hook into highlightPlayingTrack so river/nexus update when song changes
+var _origHighlight=typeof highlightPlayingTrack==='function'?highlightPlayingTrack:null;
+
 function switchTab(tab){
   document.querySelectorAll('.tab').forEach(function(b){
-    var map={'charts':'Charts','songs':'Songs','insights':'Insights'};
-    b.classList.toggle('active',b.textContent.trim().indexOf(map[tab])>=0);
+    var map={river:'River',nexus:'Nexus',songs:'Songs'};
+    b.classList.toggle('active',b.textContent.trim().indexOf(map[tab]||tab)>=0);
   });
-  document.getElementById('tab-charts').classList.toggle('active',tab==='charts');
-  document.getElementById('tab-songs').classList.toggle('active',tab==='songs');
-  var ins=document.getElementById('tab-insights');
-  if(ins)ins.classList.toggle('active',tab==='insights');
+  ['tab-river','tab-nexus','tab-songs'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el)el.classList.toggle('active',id==='tab-'+tab);
+  });
   if(tab==='songs'){if(filteredTracks.length===0&&allTracks.length>0)filteredTracks=allTracks.slice();renderTable();}
-  if(tab==='charts'){setTimeout(function(){if(yearChartInst)yearChartInst.resize();},50);}
-  if(tab==='insights'){setTimeout(renderInsights,20);}
+  if(tab==='river'){setTimeout(renderRiverFlow,30);}
+  if(tab==='nexus'){setTimeout(renderNexusWeb,30);}
 }
 
 // ══ NAME EDIT
