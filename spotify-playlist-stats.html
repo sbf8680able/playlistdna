@@ -488,8 +488,8 @@ html,body{height:100%;overflow-x:hidden;}
   </div>
   <div class="sidebar-body">
     <div class="sb-section">Import</div>
-    <button class="sb-sp-btn" id="sb-import-btn" onclick="openSpotifyImport()" data-tip="Import from Spotify" style="background:var(--blue);margin-bottom:4px;">
-      <span class="sb-icon">📋</span><span class="sb-label">Import from Spotify</span>
+    <button class="sb-sp-btn" id="sb-import-btn" onclick="openImportFlow()" data-tip="Import a playlist" style="background:var(--sp);color:#000;font-weight:700;margin-bottom:4px;">
+      <span class="sb-icon">📋</span><span class="sb-label">Import Playlist</span>
     </button>
     <div class="sb-dz" id="sb-dz" data-tip="Import CSV (fallback)">
       <input type="file" id="sb-csv-input" accept=".csv" />
@@ -610,7 +610,7 @@ html,body{height:100%;overflow-x:hidden;}
     <div style="font-family:'Syne',sans-serif;font-size:clamp(2rem,6vw,4rem);font-weight:700;letter-spacing:-2px;"><span style="color:var(--red)">PLAY</span><span style="color:var(--blue)">LIST</span><span style="color:var(--yellow)">DNA</span></div>
     <div style="font-size:.78rem;letter-spacing:3px;text-transform:uppercase;color:var(--muted)">Decode your musical identity</div>
     <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:8px;">
-      <button onclick="openSpotifyImport()" id="welcome-import-btn" style="display:none;background:var(--sp);color:#000;border:none;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;padding:14px 32px;border-radius:99px;display:flex;align-items:center;gap:10px;transition:all .2s;" onmouseover="this.style.background='#1ed760'" onmouseout="this.style.background='var(--sp)'">
+      <button onclick="openImportFlow()" id="welcome-import-btn" style="display:none;background:var(--sp);color:#000;border:none;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;padding:14px 32px;border-radius:99px;display:flex;align-items:center;gap:10px;transition:all .2s;" onmouseover="this.style.background='#1ed760'" onmouseout="this.style.background='var(--sp)'">
         <span style="font-size:1.2rem;">🎵</span> Import a Playlist
       </button>
       <div id="welcome-connect-prompt" style="display:none;">
@@ -1290,10 +1290,65 @@ function openExportifyGuide(){
 }
 
 // ══ FILE DROP
-(function(){var z=document.getElementById('sb-dz');if(z){z.addEventListener('dragover',function(e){e.preventDefault();z.classList.add('over');});z.addEventListener('dragleave',function(){z.classList.remove('over');});z.addEventListener('drop',function(e){e.preventDefault();z.classList.remove('over');if(e.dataTransfer.files[0])processFile(e.dataTransfer.files[0]);});}var ci=document.getElementById('sb-csv-input');if(ci)ci.addEventListener('change',function(e){if(e.target.files[0])processFile(e.target.files[0]);});var ud=document.getElementById('update-dz');if(ud){ud.addEventListener('dragover',function(e){e.preventDefault();ud.style.borderColor='var(--blue)';});ud.addEventListener('dragleave',function(){ud.style.borderColor='var(--border)';});ud.addEventListener('drop',function(e){e.preventDefault();ud.style.borderColor='var(--border)';if(e.dataTransfer.files[0])processUpdateCSV(e.dataTransfer.files[0]);});}var ui=document.getElementById('update-csv-inp');if(ui)ui.addEventListener('change',function(e){if(e.target.files[0])processUpdateCSV(e.target.files[0]);});})();
+(function(){var z=document.getElementById('sb-dz');if(z){z.addEventListener('dragover',function(e){e.preventDefault();z.classList.add('over');});z.addEventListener('dragleave',function(){z.classList.remove('over');});z.addEventListener('drop',function(e){e.preventDefault();z.classList.remove('over');if(e.dataTransfer.files[0])processFile(e.dataTransfer.files[0]);});}var ci=document.getElementById('sb-csv-input');if(ci)ci.addEventListener('change',function(e){if(e.target.files[0])processFile(e.target.files[0]);});
+  // ── Full-page overlay drop zone
+  var oi=document.getElementById('import-overlay-input');
+  if(oi)oi.addEventListener('change',function(e){if(e.target.files[0]){deactivateImportDropZone();processFile(e.target.files[0]);}});
+  // Drag onto overlay
+  document.addEventListener('dragover',function(e){if(_importDropActive)e.preventDefault();});
+  document.addEventListener('drop',function(e){
+    if(!_importDropActive)return;
+    e.preventDefault();
+    var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+    if(f&&f.name.endsWith('.csv')){deactivateImportDropZone();processFile(f);}
+  });
+  // Highlight drop zone on drag
+  document.addEventListener('dragenter',function(e){
+    if(!_importDropActive)return;
+    var inner=document.getElementById('import-drop-zone-inner');
+    if(inner){inner.style.borderColor='rgba(29,185,84,1)';inner.style.background='rgba(29,185,84,.15)';}
+  });
+  document.addEventListener('dragleave',function(e){
+    if(!_importDropActive)return;
+    if(e.relatedTarget&&document.contains(e.relatedTarget))return;
+    var inner=document.getElementById('import-drop-zone-inner');
+    if(inner){inner.style.borderColor='rgba(29,185,84,.6)';inner.style.background='rgba(29,185,84,.06)';}
+  });var ud=document.getElementById('update-dz');if(ud){ud.addEventListener('dragover',function(e){e.preventDefault();ud.style.borderColor='var(--blue)';});ud.addEventListener('dragleave',function(){ud.style.borderColor='var(--border)';});ud.addEventListener('drop',function(e){e.preventDefault();ud.style.borderColor='var(--border)';if(e.dataTransfer.files[0])processUpdateCSV(e.dataTransfer.files[0]);});}var ui=document.getElementById('update-csv-inp');if(ui)ui.addEventListener('change',function(e){if(e.target.files[0])processUpdateCSV(e.target.files[0]);});})();
 
 // ══ SPOTIFY NATIVE IMPORT
 var _spPlaylists = [], _spSelectedPlaylist = null;
+
+// ══ IMPORT FLOW — Exportify popup + full-page drop zone
+var _importPopup = null;
+var _importDropActive = false;
+
+function openImportFlow() {
+  // Open Exportify in a popup window
+  var w = 900, h = 700;
+  var left = Math.max(0, (screen.width - w) / 2);
+  var top = Math.max(0, (screen.height - h) / 2);
+  _importPopup = window.open(
+    'https://exportify.net',
+    'exportify',
+    'width='+w+',height='+h+',left='+left+',top='+top+',menubar=no,toolbar=no,location=no'
+  );
+
+  // Activate the full-page drop zone overlay
+  activateImportDropZone();
+}
+
+function activateImportDropZone() {
+  _importDropActive = true;
+  var overlay = document.getElementById('import-drop-overlay');
+  if (overlay) overlay.style.display = 'flex';
+}
+
+function deactivateImportDropZone() {
+  _importDropActive = false;
+  var overlay = document.getElementById('import-drop-overlay');
+  if (overlay) overlay.style.display = 'none';
+  if (_importPopup && !_importPopup.closed) _importPopup.close();
+}
 
 async function openSpotifyImport() {
   if (!spToken) {
@@ -1641,19 +1696,16 @@ function mapGenreFromTags(tags) {
 function updateWelcomeScreen() {
   var importBtn = document.getElementById('welcome-import-btn');
   var connectPrompt = document.getElementById('welcome-connect-prompt');
-  if (!importBtn || !connectPrompt) return;
-  if (spToken) {
-    importBtn.style.display = 'flex';
-    connectPrompt.style.display = 'none';
-  } else {
-    importBtn.style.display = 'none';
-    connectPrompt.style.display = 'block';
-  }
+  if (!importBtn) return;
+  // Always show Import button — works with or without Spotify (CSV fallback)
+  importBtn.style.display = 'flex';
+  if (connectPrompt) connectPrompt.style.display = 'none';
 }
 
 // ══ PROCESS FILE
 async function processFile(file){
   var hasAI=!!(PROXY_URL||APP_ANTHROPIC_KEY||localStorage.getItem('anthropic_key'));
+  deactivateImportDropZone(); // close overlay if open
   showLoading('Parsing playlist...');setProgress(10);
   try{
     var text=await file.text();
@@ -1697,11 +1749,7 @@ async function aiClassifyGenres(tracks,key){
 
 // ══ SPOTIFY AUTH (PKCE)
 function handleSpotifyBtnClick(){
-  // If already connected, just open the import picker
-  if(spToken&&spDeviceId){openSpotifyImport();return;}
-  // If we have a token but no device yet, player is still initialising
-  if(spToken){openSpotifyImport();return;}
-  // Not connected — start auth
+  if(spToken){openImportFlow();return;}
   startSpotifyAuth();
 }
 function startSpotifyAuth(){
@@ -3171,6 +3219,25 @@ function _syncVizPanel(){/* no-op, now fullscreen */}
     <a href="https://exportify.net" target="_blank" style="background:var(--sp);color:#000;border:none;cursor:pointer;font-weight:700;padding:8px 20px;border-radius:99px;font-family:'Space Grotesk',sans-serif;font-size:.82rem;text-decoration:none;display:inline-flex;align-items:center;">Open Exportify ↗</a>
   </div>
 </div></div></div>
+
+<!-- FULL PAGE IMPORT DROP OVERLAY -->
+<div id="import-drop-overlay" style="display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);flex-direction:column;align-items:center;justify-content:center;gap:20px;">
+  <div style="text-align:center;pointer-events:none;">
+    <div style="font-size:3rem;margin-bottom:12px;">📂</div>
+    <div style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:700;color:#fff;letter-spacing:1px;margin-bottom:8px;">Drop your CSV here</div>
+    <div style="font-size:.88rem;color:rgba(255,255,255,.6);max-width:340px;line-height:1.7;">Export your playlist from Exportify, then drag the CSV file onto this window</div>
+  </div>
+  <div id="import-drop-zone-inner" style="width:320px;height:160px;border:2px dashed rgba(29,185,84,.6);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(29,185,84,.06);transition:all .2s;">
+    <div style="font-size:1.5rem;">⬇</div>
+    <div style="font-size:.82rem;color:rgba(255,255,255,.7);font-weight:600;">Drop CSV anywhere on this screen</div>
+    <div style="font-size:.72rem;color:rgba(255,255,255,.4);">or</div>
+    <label style="background:var(--sp);color:#000;font-weight:700;padding:7px 18px;border-radius:99px;cursor:pointer;font-size:.8rem;font-family:'Space Grotesk',sans-serif;">
+      Browse for file
+      <input type="file" accept=".csv" id="import-overlay-input" style="display:none;" />
+    </label>
+  </div>
+  <button onclick="deactivateImportDropZone()" style="background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.5);cursor:pointer;padding:8px 20px;border-radius:99px;font-size:.8rem;font-family:'Space Grotesk',sans-serif;margin-top:8px;">Cancel</button>
+</div>
 
 <!-- ENHANCE MODAL -->
 <div id="enhance-modal" style="display:none"><div class="modal-backdrop" onclick="closeModal('enhance-modal')"><div class="sm-modal" style="max-width:420px;padding:24px;" onclick="event.stopPropagation()">
