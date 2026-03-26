@@ -520,6 +520,19 @@ html,body{height:100%;overflow-x:hidden;}
 .sp-pl-meta{font-size:.7rem;color:var(--muted);margin-top:1px;}
 .sp-pl-check{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.65rem;transition:all .15s;}
 .sp-pl-row.selected .sp-pl-check{background:var(--sp);border-color:var(--sp);color:#000;}
+
+/* ── Sidebar summary KPIs ── */
+.sb-kpi{background:var(--surface2);border-radius:7px;padding:7px 9px;}
+.sb-kpi-label{font-size:.57rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin-bottom:2px;}
+.sb-kpi-val{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:var(--text);line-height:1;}
+.sidebar.collapsed .sb-summary{display:none!important;}
+/* ── Full-height dashboard ── */
+#dashboard{display:flex;flex-direction:column;height:calc(100vh - 0px);}
+.dash-body{flex:1;display:flex;flex-direction:column;padding:8px 16px 0;min-height:0;}
+.tab-content-full{flex:1;min-height:0;overflow:hidden;}
+#tab-river,#tab-nexus{height:100%;}
+#river-panel{height:100%;}
+#river-svg,#nexus-svg{height:100%;min-height:460px;}
 </style>
 </head>
 <body>
@@ -566,6 +579,26 @@ html,body{height:100%;overflow-x:hidden;}
       <span class="sb-icon">📚</span><span class="sb-label">Update Genres from Wiki</span>
     </div>
     <div class="sb-divider"></div>
+    <!-- Playlist summary — shown when dashboard is active -->
+    <div id="sb-summary" style="display:none;padding:0 8px 8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div id="sb-pl-name" style="font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;letter-spacing:-.3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;cursor:pointer;" onclick="startNameEdit()" title="Click to rename">—</div>
+        <div style="display:flex;gap:4px;flex-shrink:0;margin-left:6px;">
+          <button onclick="spPlayAll()" style="font-size:.62rem;font-weight:700;padding:4px 8px;border-radius:99px;border:none;background:var(--sp);color:#000;cursor:pointer;">⇌</button>
+          <button onclick="openSaveModal()" style="font-size:.62rem;font-weight:700;padding:4px 8px;border-radius:99px;border:none;background:var(--surface2);color:var(--text2);cursor:pointer;border:1px solid var(--border);">💾</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px;">
+        <div class="sb-kpi"><div class="sb-kpi-label">Tracks</div><div class="sb-kpi-val" id="sb-kpi-total">—</div></div>
+        <div class="sb-kpi"><div class="sb-kpi-label">Artists</div><div class="sb-kpi-val" id="sb-kpi-artists">—</div></div>
+        <div class="sb-kpi"><div class="sb-kpi-label">Years</div><div class="sb-kpi-val" id="sb-kpi-span">—</div></div>
+        <div class="sb-kpi"><div class="sb-kpi-label">Genres</div><div class="sb-kpi-val" id="sb-kpi-genres">—</div></div>
+      </div>
+      <div id="sb-enhance-wrap" style="display:none;">
+        <button id="btn-enhance" onclick="showEnhancePrompt(allTracks,!!(PROXY_URL||APP_ANTHROPIC_KEY||localStorage.getItem('anthropic_key')))" style="width:100%;font-size:.68rem;font-weight:700;padding:6px;border-radius:7px;border:1px solid rgba(29,185,84,.3);background:rgba(29,185,84,.08);color:var(--sp);cursor:pointer;">✨ Enhance</button>
+      </div>
+    </div>
+    <div class="sb-divider" id="sb-summary-divider" style="display:none;"></div>
     <div class="sb-section">Saved Playlists</div>
     <input type="file" id="art-upload-inp" accept="image/*" style="display:none" onchange="handleArtUpload(event)" />
     <input type="file" id="sb-csv-input" accept=".csv" style="display:none" />
@@ -693,24 +726,38 @@ html,body{height:100%;overflow-x:hidden;}
 
   <!-- Dashboard -->
   <div id="dashboard" style="display:none;">
-    <div class="dash-placeholder"></div>
     <div class="dash-body">
-      <div class="kpi-row">
-        <div class="kpi"><div class="kpi-accent" style="background:var(--red)"></div><div class="kpi-label">Total Tracks</div><div class="kpi-value" id="kpi-total">—</div></div>
-        <div class="kpi"><div class="kpi-accent" style="background:var(--blue)"></div><div class="kpi-label">Unique Artists</div><div class="kpi-value" id="kpi-artists">—</div></div>
-        <div class="kpi"><div class="kpi-accent" style="background:var(--yellow)"></div><div class="kpi-label">Year Span</div><div class="kpi-value" id="kpi-span">—</div></div>
-        <div class="kpi"><div class="kpi-accent" style="background:var(--green)"></div><div class="kpi-label">Unique Genres</div><div class="kpi-value" id="kpi-genres">—</div></div>
-        <div class="kpi"><div class="kpi-accent" style="background:var(--purple)"></div><div class="kpi-label">Years Covered</div><div class="kpi-value" id="kpi-coverage">—</div><div class="kpi-sub">years with ≥1 song</div></div>
-      </div>
-      <div class="tab-bar">
-        <button class="tab active" onclick="switchTab('river')">≋ River</button>
-        <button class="tab" onclick="switchTab('nexus')">🌐 Nexus</button>
-        <button class="tab" onclick="switchTab('songs')">🎵 Songs</button>
+      <!-- KPI and filter elements hidden — data shown in sidebar summary -->
+      <span id="kpi-total" style="display:none"></span>
+      <span id="kpi-artists" style="display:none"></span>
+      <span id="kpi-span" style="display:none"></span>
+      <span id="kpi-genres" style="display:none"></span>
+      <span id="kpi-coverage" style="display:none"></span>
+      <span id="other-note" style="display:none"></span>
+      <!-- Hidden filter selects required by getCFTracks/populateCFSelects -->
+      <select id="gf-genre" style="display:none"></select>
+      <select id="gf-year" style="display:none"></select>
+      <select id="gnf-gender" style="display:none"></select>
+      <select id="gnf-year" style="display:none"></select>
+      <select id="yf-gender" style="display:none"></select>
+      <select id="yf-genre" style="display:none"></select>
+      <!-- Hidden gender/year bar containers -->
+      <div id="gender-bars" style="display:none"></div>
+      <div id="genre-tiles" style="display:none"></div>
+      <canvas id="year-chart" style="display:none"></canvas>
+      <div id="year-stats" style="display:none"></div>
+      <div id="gf-cnt" style="display:none"></div>
+      <div id="gnf-cnt" style="display:none"></div>
+      <div id="yf-cnt" style="display:none"></div>
+      <div class="tab-bar" style="width:100%;border-radius:0;background:none;padding:0;border-bottom:1px solid var(--border);margin-bottom:0;gap:0;">
+        <button class="tab active" onclick="switchTab('river')" style="flex:1;border-radius:0;padding:10px;font-size:.78rem;">≋ River</button>
+        <button class="tab" onclick="switchTab('nexus')" style="flex:1;border-radius:0;padding:10px;font-size:.78rem;">🌐 Nexus</button>
+        <button class="tab" onclick="switchTab('songs')" style="flex:1;border-radius:0;padding:10px;font-size:.78rem;">🎵 Songs</button>
       </div>
       <div id="tab-river" class="active" style="padding:0 0 12px;">
         <div id="river-panel" style="position:relative;min-height:500px;">
           <canvas id="river-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity .5s;"></canvas>
-          <svg id="river-svg" width="100%" viewBox="0 0 900 520" style="display:block;cursor:default;" preserveAspectRatio="xMidYMid meet"></svg>
+          <svg id="river-svg" width="100%" viewBox="0 0 900 640" style="display:block;height:calc(100vh - 160px);min-height:500px;cursor:default;" preserveAspectRatio="xMidYMid meet"></svg>
           <div id="river-legend" style="display:flex;gap:16px;flex-wrap:wrap;padding:8px 16px 0;font-size:11px;color:var(--text2);"></div>
           <div id="river-selection" style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 16px 4px;min-height:34px;align-items:center;">
             <span style="font-size:11px;color:var(--muted);">Shift+click to multi-select · click to play or explore</span>
@@ -718,7 +765,7 @@ html,body{height:100%;overflow-x:hidden;}
         </div>
       </div>
       <div id="tab-nexus" style="padding:0 0 12px;">
-        <svg id="nexus-svg" width="100%" viewBox="0 0 900 560" style="display:block;cursor:default;" preserveAspectRatio="xMidYMid meet"></svg>
+        <svg id="nexus-svg" width="100%" viewBox="0 0 900 620" style="display:block;height:calc(100vh - 120px);min-height:500px;cursor:default;" preserveAspectRatio="xMidYMid meet"></svg>
       </div>
       <div id="tab-songs">
         <div class="chart-panel songs-panel">
@@ -1093,6 +1140,7 @@ function savePlaylist(){
   if(!name){alert('Please enter a name.');return;}
   currentPlaylistName=name;
   safeSet('playlist-name',name);
+  safeSet('sb-pl-name',name);
   const saved=getSaved();
   // Check if overwriting existing
   const existIdx=saved.findIndex(p=>p.name===name);
@@ -2239,9 +2287,10 @@ function initDashboard(name){
   if(wGBtn)wGBtn.style.display=wikiCount2>0?'flex':'none';
   ['welcome-screen','loading-screen'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
   document.getElementById('oauth-screen').classList.remove('active');
-  document.getElementById('dashboard').style.display='block';
-  document.getElementById('topbar').style.display='flex';
+  document.getElementById('dashboard').style.display='flex';
+  // topbar is hidden (KPIs in sidebar now)
   safeSet('topbar-title',name);
+  safeSet('sb-pl-name',name);
   var ttEl=safeGet('topbar-title');if(ttEl)ttEl.style.display='';
   document.getElementById('topbar-title-inp').style.display='none';
   // Show playlist art in topbar if available
@@ -2271,12 +2320,32 @@ function updateAllKPIs(){
   var minY=years.length?Math.min.apply(null,years):null,maxY=years.length?Math.max.apply(null,years):null;
   var uA=new Set(allTracks.map(function(t){return t.artistName;})).size;
   var allG=allTracks.reduce(function(a,t){return a.concat(t.genres);},[]);
+  var spanStr=minY&&maxY?(minY===maxY?String(minY):minY+'–'+maxY):'—';
+  var genreCount=new Set(allG).size||'—';
+  // Update hidden compat elements
   safeSet('kpi-total',allTracks.length);
   safeSet('kpi-artists',uA);
-  safeSet('kpi-span',minY&&maxY?(minY===maxY?minY:minY+'–'+maxY):'—');
-  safeSet('kpi-genres',new Set(allG).size||'—');
+  safeSet('kpi-span',spanStr);
+  safeSet('kpi-genres',genreCount);
   safeSet('kpi-coverage',new Set(years).size);
-  safeSet('topbar-meta',allTracks.length+' tracks · '+uA+' artists · '+new Set(allG).size+' unique genres');
+  safeSet('topbar-meta',allTracks.length+' tracks · '+uA+' artists · '+genreCount+' unique genres');
+  // Update sidebar summary
+  safeSet('sb-kpi-total',allTracks.length);
+  safeSet('sb-kpi-artists',uA);
+  safeSet('sb-kpi-span',spanStr);
+  safeSet('sb-kpi-genres',genreCount);
+  safeSet('sb-pl-name',currentPlaylistName||'Playlist');
+  // Show/hide summary section
+  var sumEl=document.getElementById('sb-summary');
+  var sumDiv=document.getElementById('sb-summary-divider');
+  var show=allTracks.length>0;
+  if(sumEl)sumEl.style.display=show?'':'none';
+  if(sumDiv)sumDiv.style.display=show?'':'none';
+  // Enhance button in sidebar
+  var needsEnhance=allTracks.some(function(t){return t.gender==='unknown'||t.mainGenre==='Other';});
+  var hasAI=!!(PROXY_URL||APP_ANTHROPIC_KEY||localStorage.getItem('anthropic_key'));
+  var enhWrap=document.getElementById('sb-enhance-wrap');
+  if(enhWrap)enhWrap.style.display=(needsEnhance&&hasAI)?'':'none';
   populateCFSelects();
   renderGenderBars();renderGenreTiles();renderYearChart();
   populateFilters();applyFilters();
@@ -2965,7 +3034,7 @@ function riverNodeClick(col,val,e){
 function renderRiverFlow(){
   var svg=document.getElementById('river-svg');
   if(!svg)return;
-  var W=900,H=520;
+  var W=900,H=640;
 
   // Determine if we show decade or year for time column
   var years=[...new Set(allTracks.map(function(t){return t.year;}).filter(Boolean))];
@@ -2986,9 +3055,9 @@ function renderRiverFlow(){
   var times=Object.entries(timeMap).sort(function(a,b){return a[0].localeCompare(b[0]);});
 
   var TOTAL=allTracks.length||1;
-  var pad=40,colW=100,gap=(W-pad*2-colW*3)/2;
+  var pad=30,colW=110,gap=(W-pad*2-colW*3)/2;
   var cols=[pad,pad+colW+gap,pad+colW*2+gap*2];
-  var rowH=H-80;
+  var rowH=H-70;
 
   // Get currently playing track
   var playing=spCurrentTrackIdx>=0&&spQueue[spCurrentTrackIdx]?spQueue[spCurrentTrackIdx]:null;
@@ -3161,7 +3230,7 @@ function renderRiverFlow(){
 function renderNexusWeb(){
   var svg=document.getElementById('nexus-svg');
   if(!svg)return;
-  var W=900,H=560,cx=420,cy=270;
+  var W=900,H=620,cx=420,cy=300;
 
   var genderMap={},genreMap={};
   allTracks.forEach(function(t){
