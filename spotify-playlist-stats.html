@@ -505,7 +505,7 @@ html,body{height:100%;overflow-x:hidden;}
     <div id="sb-sp-status" style="font-size:.66rem;color:var(--muted);padding:4px 12px;display:none;"></div>
     <div class="sb-divider"></div>
     <div class="sb-section">Settings</div>
-    <div class="sb-api" data-tip="Anthropic Key">
+    <div class="sb-api" id="sb-api-section" data-tip="Anthropic Key">
       <div style="font-size:.63rem;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Anthropic API Key</div>
       <input type="password" class="sb-api-input" id="sb-api-key" placeholder="sk-ant-... (AI features)" oninput="localStorage.setItem('anthropic_key',this.value)" />
     </div>
@@ -584,7 +584,7 @@ html,body{height:100%;overflow-x:hidden;}
     <!-- Pre-configured: just one button -->
     <div id="oauth-preconfigured" style="display:none;flex-direction:column;align-items:center;gap:10px;text-align:center;max-width:340px;">
       <p style="font-size:.86rem;color:var(--text2);line-height:1.7;">Connect your Spotify Premium account to play music inside the app.</p>
-      <button class="oauth-btn" onclick="doSpotifyAuth()"><span>🎵</span> Connect with Spotify</button>
+      <button class="oauth-btn" onclick="doAuthDirectly()"><span>🎵</span> Connect with Spotify</button>
       <div style="font-size:.72rem;color:var(--muted)">Requires Spotify Premium &middot; <a href="#" onclick="cancelAuth();return false;" style="color:var(--blue)">Skip for now</a></div>
     </div>
     <!-- Manual setup: show inputs -->
@@ -1302,9 +1302,9 @@ var _spPlaylists = [], _spSelectedPlaylist = null;
 
 async function openSpotifyImport() {
   if (!spToken) {
-    // Not connected yet — prompt connect then come back
-    var goAuth = confirm('Connect Spotify first to import your playlists. Connect now?');
-    if (goAuth) startSpotifyAuth();
+    // Not connected — start auth, but set a flag to auto-open import after
+    sessionStorage.setItem('sp_post_auth', 'import');
+    startSpotifyAuth();
     return;
   }
   _spSelectedPlaylist = null;
@@ -1595,6 +1595,15 @@ function startSpotifyAuth(){
   if(document.getElementById('dashboard'))document.getElementById('dashboard').style.display='none';
   document.getElementById('oauth-screen').classList.add('active');
 }
+function doAuthDirectly(){
+  // Used by the pre-configured panel — reads stored values, never touches input fields
+  var clientId=APP_CLIENT_ID||localStorage.getItem('sp_client_id')||'';
+  var redirectUri=APP_REDIRECT_URI||localStorage.getItem('sp_redirect_uri')||'';
+  if(!clientId){alert('No Spotify Client ID found. Please use the manual setup.');return;}
+  if(!redirectUri||redirectUri.startsWith('file://')){alert('No valid Redirect URI found. Please use the manual setup.');return;}
+  spClientId=clientId;
+  _doAuthWith(clientId,redirectUri);
+}
 async function _doAuthWith(clientId, redirectUri){
   // Generate PKCE challenge and redirect to Spotify
   var verifier=btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
@@ -1694,6 +1703,11 @@ function initSpotifyPlayer(){
     fetch('https://api.spotify.com/v1/me/player',{method:'PUT',headers:{'Authorization':'Bearer '+spToken,'Content-Type':'application/json'},body:JSON.stringify({device_ids:[spDeviceId],play:false})}).catch(function(){});
     setTimeout(function(){if(statusEl)statusEl.style.display='none';},3000);
     updateWelcomeScreen();
+    // If user clicked "Import" before connecting, auto-open the picker now
+    if(sessionStorage.getItem('sp_post_auth')==='import'){
+      sessionStorage.removeItem('sp_post_auth');
+      setTimeout(openSpotifyImport, 500);
+    }
   });
   spPlayer.addListener('not_ready',function(){spDeviceId=null;});
   spPlayer.addListener('player_state_changed',function(state){
@@ -2900,14 +2914,12 @@ function _syncVizPanel(){/* no-op, now fullscreen */}
   // ── Anthropic key: proxy takes priority, then APP key, then localStorage
   var apiKey=APP_ANTHROPIC_KEY||localStorage.getItem('anthropic_key')||'';
   var apiEl=document.getElementById('sb-api-key');
-  if(apiEl){
-    if(PROXY_URL){
-      // Proxy is configured — hide the key input entirely, AI just works
-      var apiSection=apiEl.closest('div');
-      if(apiSection)apiSection.style.display='none';
-    } else if(apiKey){
-      apiEl.value=apiKey;
-    }
+  var apiSection=document.getElementById('sb-api-section');
+  if(PROXY_URL||APP_ANTHROPIC_KEY){
+    // AI handled server-side or key baked in — hide input completely
+    if(apiSection)apiSection.style.display='none';
+  } else if(apiKey&&apiEl){
+    apiEl.value=apiKey;
   }
 
   // ── URL params: support invite links (?cid=...&ru=...&ak=...)
