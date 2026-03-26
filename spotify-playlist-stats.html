@@ -462,6 +462,19 @@ html,body{height:100%;overflow-x:hidden;}
 .viz-play-btn.play-main:hover{background:#1ed760;}
 @keyframes spGenderPulse{0%,100%{filter:brightness(1);}50%{filter:brightness(1.45) saturate(1.6);}}
 @keyframes spTilePulse{0%,100%{transform:scale(1);}45%{transform:scale(1.06);box-shadow:0 0 0 3px rgba(59,130,246,.55);}}
+
+/* ══ SPOTIFY IMPORT PICKER ══ */
+.sp-picker-grid{display:flex;flex-direction:column;gap:2px;max-height:420px;overflow-y:auto;padding:4px 0;}
+.sp-pl-row{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:background .12s;border:1.5px solid transparent;}
+.sp-pl-row:hover{background:var(--surface2);}
+.sp-pl-row.selected{background:rgba(29,185,84,.08);border-color:rgba(29,185,84,.35);}
+.sp-pl-art{width:44px;height:44px;border-radius:6px;object-fit:cover;flex-shrink:0;}
+.sp-pl-art-ph{width:44px;height:44px;border-radius:6px;flex-shrink:0;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
+.sp-pl-info{flex:1;min-width:0;}
+.sp-pl-name{font-size:.84rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sp-pl-meta{font-size:.7rem;color:var(--muted);margin-top:1px;}
+.sp-pl-check{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.65rem;transition:all .15s;}
+.sp-pl-row.selected .sp-pl-check{background:var(--sp);border-color:var(--sp);color:#000;}
 </style>
 </head>
 <body>
@@ -475,19 +488,15 @@ html,body{height:100%;overflow-x:hidden;}
   </div>
   <div class="sidebar-body">
     <div class="sb-section">Import</div>
-    <div class="sb-dz" id="sb-dz" data-tip="Import CSV">
+    <button class="sb-sp-btn" id="sb-import-btn" onclick="openSpotifyImport()" data-tip="Import from Spotify" style="background:var(--blue);margin-bottom:4px;">
+      <span class="sb-icon">📋</span><span class="sb-label">Import from Spotify</span>
+    </button>
+    <div class="sb-dz" id="sb-dz" data-tip="Import CSV (fallback)">
       <input type="file" id="sb-csv-input" accept=".csv" />
       <div class="sb-dz-icon">📥</div>
-      <div class="sb-dz-label">Drop Exportify CSV</div>
+      <div class="sb-dz-label">Drop CSV (fallback)</div>
       <div class="sb-dz-sub">or click to browse</div>
     </div>
-    <div class="sb-item" onclick="openExportifyGuide()" data-tip="Get CSV from Exportify" style="cursor:pointer;">
-      <span class="sb-icon">📤</span>
-      <span class="sb-label">Export from Spotify</span>
-    </div>
-    <a href="https://exportify.net" target="_blank" class="sb-item" data-tip="Open Exportify">
-      <span class="sb-icon">🎧</span><span class="sb-label">Open Exportify →</span>
-    </a>
     <div class="sb-divider"></div>
     <div class="sb-section">Spotify Playback</div>
     <button class="sb-sp-btn" id="sb-sp-btn" onclick="startSpotifyAuth()" data-tip="Connect Spotify">
@@ -597,10 +606,20 @@ html,body{height:100%;overflow-x:hidden;}
   </div>
 
   <!-- Welcome -->
-  <div id="welcome-screen" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;padding:40px;text-align:center;gap:12px;">
+  <div id="welcome-screen" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;padding:40px;text-align:center;gap:16px;">
     <div style="font-family:'Syne',sans-serif;font-size:clamp(2rem,6vw,4rem);font-weight:700;letter-spacing:-2px;"><span style="color:var(--red)">PLAY</span><span style="color:var(--blue)">LIST</span><span style="color:var(--yellow)">DNA</span></div>
     <div style="font-size:.78rem;letter-spacing:3px;text-transform:uppercase;color:var(--muted)">Decode your musical identity</div>
-    <div style="font-size:.86rem;color:var(--text2);max-width:380px;line-height:1.7;margin-top:8px;">Drop a CSV from <a href="https://exportify.net" target="_blank" style="color:var(--blue);font-weight:600">exportify.net</a> into the left panel, or load a saved playlist.</div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:8px;">
+      <button onclick="openSpotifyImport()" id="welcome-import-btn" style="display:none;background:var(--sp);color:#000;border:none;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;padding:14px 32px;border-radius:99px;display:flex;align-items:center;gap:10px;transition:all .2s;" onmouseover="this.style.background='#1ed760'" onmouseout="this.style.background='var(--sp)'">
+        <span style="font-size:1.2rem;">🎵</span> Import a Playlist
+      </button>
+      <div id="welcome-connect-prompt" style="display:none;">
+        <button onclick="startSpotifyAuth()" style="background:var(--sp);color:#000;border:none;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;padding:14px 32px;border-radius:99px;transition:all .2s;" onmouseover="this.style.background='#1ed760'" onmouseout="this.style.background='var(--sp)'">
+          Connect Spotify to get started
+        </button>
+      </div>
+      <div style="font-size:.78rem;color:var(--muted);">or drop a saved playlist in the left panel</div>
+    </div>
   </div>
 
   <!-- Topbar (shown when dashboard is active) -->
@@ -895,12 +914,12 @@ var lyricsTrackName='';
 // ══ DEPLOYMENT CONFIG ════════════════════════════════════
 // Fill these in before sharing. When set, users never see
 // the Client ID / Redirect URI form — one click to connect.
-var APP_CLIENT_ID    = '2034d83672c5415ba285134a9fff7b69';  // Your Spotify App Client ID
-var APP_REDIRECT_URI = 'https://sbf8680able.github.io/playlistdna/spotify-playlist-stats.html';  // e.g. https://yourname.github.io/playlistdna/spotify-playlist-stats.html
+var APP_CLIENT_ID    = '';  // Your Spotify App Client ID
+var APP_REDIRECT_URI = '';  // e.g. https://yourname.github.io/playlistdna/spotify-playlist-stats.html
 // Proxy URL: deploy worker.js to Cloudflare Workers, paste the URL here.
 // When set, the Anthropic API key input disappears and AI features
 // just work for everyone — key stays server-side, never in the browser.
-var PROXY_URL = 'https://playlistdna-proxy.sbf8680able.workers.dev'; // e.g. 'https://playlistdna-proxy.yourname.workers.dev'
+var PROXY_URL = ''; // e.g. 'https://playlistdna-proxy.yourname.workers.dev'
 var APP_ANTHROPIC_KEY = ''; // Only use this if NOT using the proxy (less secure)
 // ══════════════════════════════════════════════════════════
 
@@ -1278,6 +1297,239 @@ function openExportifyGuide(){
 // ══ FILE DROP
 (function(){var z=document.getElementById('sb-dz');if(z){z.addEventListener('dragover',function(e){e.preventDefault();z.classList.add('over');});z.addEventListener('dragleave',function(){z.classList.remove('over');});z.addEventListener('drop',function(e){e.preventDefault();z.classList.remove('over');if(e.dataTransfer.files[0])processFile(e.dataTransfer.files[0]);});}var ci=document.getElementById('sb-csv-input');if(ci)ci.addEventListener('change',function(e){if(e.target.files[0])processFile(e.target.files[0]);});var ud=document.getElementById('update-dz');if(ud){ud.addEventListener('dragover',function(e){e.preventDefault();ud.style.borderColor='var(--blue)';});ud.addEventListener('dragleave',function(){ud.style.borderColor='var(--border)';});ud.addEventListener('drop',function(e){e.preventDefault();ud.style.borderColor='var(--border)';if(e.dataTransfer.files[0])processUpdateCSV(e.dataTransfer.files[0]);});}var ui=document.getElementById('update-csv-inp');if(ui)ui.addEventListener('change',function(e){if(e.target.files[0])processUpdateCSV(e.target.files[0]);});})();
 
+// ══ SPOTIFY NATIVE IMPORT
+var _spPlaylists = [], _spSelectedPlaylist = null;
+
+async function openSpotifyImport() {
+  if (!spToken) {
+    // Not connected yet — prompt connect then come back
+    var goAuth = confirm('Connect Spotify first to import your playlists. Connect now?');
+    if (goAuth) startSpotifyAuth();
+    return;
+  }
+  _spSelectedPlaylist = null;
+  document.getElementById('sp-pl-grid').innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:.82rem;">Loading your playlists…</div>';
+  document.getElementById('sp-import-progress').style.display = 'none';
+  document.getElementById('sp-import-search').value = '';
+  var btn = document.getElementById('sp-import-go-btn');
+  btn.disabled = true; btn.style.opacity = '.4'; btn.style.cursor = 'not-allowed';
+  document.getElementById('sp-import-sel-label').textContent = 'Select a playlist';
+  openModal('sp-import-modal');
+  await loadSpPlaylists();
+}
+
+async function loadSpPlaylists() {
+  await ensureToken();
+  var all = [];
+  var url = 'https://api.spotify.com/v1/me/playlists?limit=50';
+  while (url) {
+    var r = await fetch(url, { headers: { 'Authorization': 'Bearer ' + spToken } });
+    if (!r.ok) break;
+    var d = await r.json();
+    all = all.concat(d.items || []);
+    url = d.next || null;
+  }
+  _spPlaylists = all.filter(Boolean);
+  renderSpPlaylists(_spPlaylists);
+}
+
+function renderSpPlaylists(list) {
+  var grid = document.getElementById('sp-pl-grid');
+  if (!list.length) {
+    grid.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:.82rem;">No playlists found.</div>';
+    return;
+  }
+  grid.innerHTML = list.map(function(pl) {
+    var img = pl.images && pl.images[0] ? pl.images[0].url : '';
+    var artHtml = img
+      ? '<img class="sp-pl-art" src="' + img + '" loading="lazy" />'
+      : '<div class="sp-pl-art-ph">🎵</div>';
+    var count = pl.tracks ? pl.tracks.total : 0;
+    var safeName = (pl.name||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return '<div class="sp-pl-row" data-id="' + pl.id + '" onclick="selectSpPlaylist(this,\'' + pl.id + '\',\'' + safeName + '\',' + count + ')">'
+      + artHtml
+      + '<div class="sp-pl-info">'
+        + '<div class="sp-pl-name">' + esc(pl.name) + '</div>'
+        + '<div class="sp-pl-meta">' + count + ' tracks' + (pl.owner ? ' · ' + esc(pl.owner.display_name) : '') + '</div>'
+      + '</div>'
+      + '<div class="sp-pl-check">✓</div>'
+    + '</div>';
+  }).join('');
+}
+
+function filterSpPlaylists(q) {
+  var filtered = q
+    ? _spPlaylists.filter(function(p) { return p.name.toLowerCase().includes(q.toLowerCase()); })
+    : _spPlaylists;
+  renderSpPlaylists(filtered);
+  // Re-highlight if selected still in list
+  if (_spSelectedPlaylist) {
+    var row = document.querySelector('.sp-pl-row[data-id="' + _spSelectedPlaylist.id + '"]');
+    if (row) row.classList.add('selected');
+  }
+}
+
+function selectSpPlaylist(el, id, name, count) {
+  document.querySelectorAll('.sp-pl-row').forEach(function(r) { r.classList.remove('selected'); });
+  el.classList.add('selected');
+  _spSelectedPlaylist = { id: id, name: name, count: count };
+  var btn = document.getElementById('sp-import-go-btn');
+  btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
+  document.getElementById('sp-import-sel-label').textContent = '"' + name + '" — ' + count + ' tracks';
+}
+
+async function importSelectedPlaylist() {
+  if (!_spSelectedPlaylist) return;
+  var pl = _spSelectedPlaylist;
+  // Show progress, hide grid
+  document.getElementById('sp-pl-grid').style.display = 'none';
+  document.getElementById('sp-import-search').style.display = 'none';
+  var prog = document.getElementById('sp-import-progress');
+  prog.style.display = 'flex';
+  setSpImportProgress('Fetching tracks from Spotify…', 5);
+
+  try {
+    await ensureToken();
+    // 1. Fetch all tracks in pages of 100
+    var items = [];
+    var url = 'https://api.spotify.com/v1/playlists/' + pl.id + '/tracks?limit=100&fields=next,items(track(id,name,duration_ms,album(name,images,release_date),artists(name),external_ids,uri))';
+    var fetched = 0;
+    while (url) {
+      var r = await fetch(url, { headers: { 'Authorization': 'Bearer ' + spToken } });
+      if (!r.ok) throw new Error('Failed to fetch tracks');
+      var d = await r.json();
+      items = items.concat((d.items || []).filter(function(i) { return i.track && i.track.name; }));
+      fetched = items.length;
+      setSpImportProgress('Fetching tracks… ' + fetched + ' / ' + pl.count, Math.min(40, 5 + (fetched / Math.max(pl.count, 1)) * 35));
+      url = d.next || null;
+    }
+    setSpImportProgress('Fetching artist genres…', 42);
+
+    // 2. Fetch artist genre tags in batches (Spotify /artists endpoint, 50 per call)
+    var artistIds = [...new Set(items.map(function(i) { return i.track.artists[0] && i.track.artists[0].id; }).filter(Boolean))];
+    var artistGenreMap = {};
+    for (var ai = 0; ai < artistIds.length; ai += 50) {
+      var batch = artistIds.slice(ai, ai + 50);
+      try {
+        var ar = await fetch('https://api.spotify.com/v1/artists?ids=' + batch.join(','), { headers: { 'Authorization': 'Bearer ' + spToken } });
+        if (ar.ok) {
+          var ad = await ar.json();
+          (ad.artists || []).forEach(function(a) { if (a) artistGenreMap[a.id] = a.genres || []; });
+        }
+      } catch(e) {}
+      setSpImportProgress('Fetching genres… ' + Math.min(ai + 50, artistIds.length) + ' / ' + artistIds.length, 42 + (ai / artistIds.length) * 18);
+    }
+
+    // 3. Build track objects matching the same shape as parseCSV output
+    var tracks = items.map(function(item) {
+      var t = item.track;
+      var artistId = t.artists[0] && t.artists[0].id;
+      var genreTags = artistId ? (artistGenreMap[artistId] || []) : [];
+      var releaseDate = t.album && t.album.release_date ? t.album.release_date : '';
+      var year = releaseDate ? parseInt(releaseDate.split('-')[0]) : null;
+      var imageUrl = t.album && t.album.images && t.album.images[0] ? t.album.images[0].url : '';
+      return {
+        name: t.name,
+        artistName: t.artists.map(function(a) { return a.name; }).join(', '),
+        album: t.album ? t.album.name : '',
+        durationMs: t.duration_ms || 0,
+        genres: genreTags,
+        mainGenre: mapGenreFromTags(genreTags),
+        spotifyYear: year,
+        originalYear: null,
+        year: year,
+        spotifyUri: t.uri || '',
+        imageUrl: imageUrl,
+        gender: 'unknown',
+        wikiUrl: '',
+        popularity: t.popularity || 0,
+      };
+    });
+
+    setSpImportProgress('Running AI enrichment…', 62);
+
+    // 4. Run same AI pipeline as CSV import
+    var hasAI = !!(PROXY_URL || APP_ANTHROPIC_KEY || localStorage.getItem('anthropic_key'));
+    if (hasAI) {
+      var names = [...new Set(tracks.map(function(t) { return t.artistName; }))];
+      setSpImportProgress('AI: detecting artist genders…', 65);
+      var gm = await detectGenders(names, null);
+      tracks.forEach(function(t) { t.gender = gm[t.artistName] || 'unknown'; });
+      var others = tracks.filter(function(t) { return t.mainGenre === 'Other'; });
+      if (others.length > 0 && others.length <= 80) {
+        setSpImportProgress('AI: classifying ' + others.length + ' genres…', 78);
+        var fixes = await aiClassifyGenres(others, null);
+        fixes.forEach(function(f) {
+          var tr = tracks.find(function(x) { return x.name === f.name && x.artistName === f.artist; });
+          if (tr && f.genre && f.genre !== 'Other') tr.mainGenre = f.genre;
+        });
+      }
+    }
+
+    setSpImportProgress('Building dashboard…', 95);
+    await sleep(200);
+
+    // 5. Launch dashboard
+    closeModal('sp-import-modal');
+    allTracks = tracks;
+    filteredTracks = tracks.slice();
+    currentPlaylistName = pl.name;
+    currentSavedIdx = -1;
+    document.getElementById('btn-update') && (document.getElementById('btn-update').style.display = 'none');
+    initDashboard(pl.name);
+
+  } catch(err) {
+    console.error('Import failed:', err);
+    // Reset modal state
+    document.getElementById('sp-pl-grid').style.display = '';
+    document.getElementById('sp-import-search').style.display = '';
+    prog.style.display = 'none';
+    document.getElementById('sp-pl-grid').innerHTML = '<div style="padding:20px;text-align:center;color:#e8472a;font-size:.82rem;">Import failed: ' + esc(err.message) + '. Please try again.</div>';
+  }
+}
+
+function setSpImportProgress(label, pct) {
+  var l = document.getElementById('sp-import-label');
+  var b = document.getElementById('sp-import-bar');
+  if (l) l.textContent = label;
+  if (b) b.style.width = Math.min(100, pct) + '%';
+}
+
+function mapGenreFromTags(tags) {
+  if (!tags || !tags.length) return 'Other';
+  var str = tags.join(' ').toLowerCase();
+  var map = {
+    'Rock':['rock','punk','metal','grunge','indie rock','alternative','emo','hardcore','post-punk'],
+    'Pop':['pop','dance pop','teen pop','synth pop','electropop','bubblegum','k-pop'],
+    'Hip-Hop':['hip hop','rap','trap','drill','boom bap','crunk','gangsta'],
+    'R&B/Soul':['r&b','soul','neo soul','funk','gospel','motown','rhythm and blues'],
+    'Electronic':['electronic','edm','house','techno','trance','dubstep','drum and bass','ambient','synth'],
+    'Country':['country','bluegrass','americana','outlaw country','country pop'],
+    'Folk':['folk','acoustic','singer-songwriter','indie folk','folk rock'],
+    'Jazz':['jazz','swing','bebop','blues','big band','smooth jazz'],
+    'Classical':['classical','orchestra','symphony','opera','chamber','baroque'],
+    'Latin':['latin','reggaeton','salsa','bachata','cumbia','merengue','bossa nova'],
+  };
+  for (var genre in map) {
+    if (map[genre].some(function(k) { return str.includes(k); })) return genre;
+  }
+  return 'Other';
+}
+
+// Show correct CTA on welcome screen based on Spotify connection
+function updateWelcomeScreen() {
+  var importBtn = document.getElementById('welcome-import-btn');
+  var connectPrompt = document.getElementById('welcome-connect-prompt');
+  if (!importBtn || !connectPrompt) return;
+  if (spToken) {
+    importBtn.style.display = 'flex';
+    connectPrompt.style.display = 'none';
+  } else {
+    importBtn.style.display = 'none';
+    connectPrompt.style.display = 'block';
+  }
+}
+
 // ══ PROCESS FILE
 async function processFile(file){
   var hasAI=!!(PROXY_URL||APP_ANTHROPIC_KEY||localStorage.getItem('anthropic_key'));
@@ -1294,7 +1546,7 @@ async function processFile(file){
       var others=tracks.filter(function(t){return t.mainGenre==='Other';});
       if(others.length>0&&others.length<=80){
         setLoadingText('AI classifying '+others.length+' genres...');setProgress(72);
-        var fixes=await aiClassifyGenres(others,key);
+        var fixes=await aiClassifyGenres(others,null);
         fixes.forEach(function(f){
           var t=tracks.find(function(x){return x.name===f.name&&x.artistName===f.artist;});
           if(t&&f.genre&&f.genre!=='Other')t.mainGenre=f.genre;
@@ -1441,6 +1693,7 @@ function initSpotifyPlayer(){
     if(btn){btn.classList.add('connected');document.getElementById('sb-sp-label').textContent='Spotify Connected';var ic=document.getElementById('sb-sp-icon');if(ic)ic.textContent='✅';}
     fetch('https://api.spotify.com/v1/me/player',{method:'PUT',headers:{'Authorization':'Bearer '+spToken,'Content-Type':'application/json'},body:JSON.stringify({device_ids:[spDeviceId],play:false})}).catch(function(){});
     setTimeout(function(){if(statusEl)statusEl.style.display='none';},3000);
+    updateWelcomeScreen();
   });
   spPlayer.addListener('not_ready',function(){spDeviceId=null;});
   spPlayer.addListener('player_state_changed',function(state){
@@ -2686,8 +2939,38 @@ function _syncVizPanel(){/* no-op, now fullscreen */}
   }
 
   renderSBSaved();
+  updateWelcomeScreen();
 })();
 </script>
+
+<!-- SPOTIFY IMPORT MODAL -->
+<div id="sp-import-modal" style="display:none"><div class="modal-backdrop" onclick="closeModal('sp-import-modal')"><div class="modal" style="max-width:540px;" onclick="event.stopPropagation()">
+  <div class="modal-hdr">
+    <div class="modal-dot" style="background:var(--sp)"></div>
+    <div class="modal-title">🎵 Import from Spotify</div>
+    <button class="modal-close" onclick="closeModal('sp-import-modal')">✕</button>
+  </div>
+  <div style="padding:14px 20px 8px;">
+    <input type="text" id="sp-import-search" placeholder="Search your playlists…"
+      style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:.82rem;padding:8px 12px;outline:none;margin-bottom:10px;"
+      oninput="filterSpPlaylists(this.value)" />
+    <div id="sp-pl-grid" class="sp-picker-grid"></div>
+    <!-- Progress during fetch -->
+    <div id="sp-import-progress" style="display:none;flex-direction:column;gap:8px;padding:16px 0 4px;">
+      <div id="sp-import-label" style="font-size:.78rem;color:var(--muted);">Fetching tracks…</div>
+      <div style="height:4px;background:var(--border);border-radius:99px;overflow:hidden;">
+        <div id="sp-import-bar" style="height:100%;background:linear-gradient(90deg,var(--sp),var(--blue));width:0%;transition:width .3s;border-radius:99px;"></div>
+      </div>
+    </div>
+  </div>
+  <div style="padding:12px 20px 16px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);">
+    <div id="sp-import-sel-label" style="font-size:.78rem;color:var(--muted);">Select a playlist</div>
+    <button id="sp-import-go-btn" onclick="importSelectedPlaylist()" disabled
+      style="background:var(--sp);color:#000;border:none;cursor:not-allowed;opacity:.4;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.84rem;padding:9px 22px;border-radius:99px;transition:all .2s;">
+      Import →
+    </button>
+  </div>
+</div></div></div>
 
 <!-- SHARE MODAL -->
 <div id="share-modal" style="display:none"><div class="modal-backdrop" onclick="closeModal('share-modal')"><div class="sm-modal" style="max-width:500px;padding:24px;" onclick="event.stopPropagation()">
