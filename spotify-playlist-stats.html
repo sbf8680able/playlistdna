@@ -1648,7 +1648,9 @@ function showEnhancePrompt(tracks, hasAI) {
 
 async function runEnhancement() {
   closeModal('enhance-modal');
-  showLoading('Running AI enrichment…'); setProgress(10);
+  showLoading('Running AI enrichment…');
+  await new Promise(function(r){setTimeout(r,50);}); // let loading screen render
+  setProgress(10);
   try {
     var names = [];
     var seen = {};
@@ -1756,7 +1758,7 @@ async function processFile(file){
     // Offer enhancement after dashboard loads
     var hasAI2=!!(PROXY_URL||APP_ANTHROPIC_KEY||localStorage.getItem('anthropic_key'));
     setTimeout(function(){showEnhancePrompt(allTracks,hasAI2);},800);
-  }catch(err){console.error(err);hideLoading();document.getElementById('welcome-screen').style.display='flex';alert('Error: '+err.message);}
+  }catch(err){console.error(err);hideLoading();alert('Import error: '+err.message);}
 }
 
 // ══ AI GENRE
@@ -2277,8 +2279,9 @@ function updateAllKPIs(){
   safeSet('topbar-meta',allTracks.length+' tracks · '+uA+' artists · '+new Set(allG).size+' unique genres');
   populateCFSelects();
   renderGenderBars();renderGenreTiles();renderYearChart();
-  setTimeout(renderRiverFlow,50);
   populateFilters();applyFilters();
+  // Only re-render river/nexus if their tab is currently visible
+  if(document.getElementById('tab-river')&&document.getElementById('tab-river').classList.contains('active'))setTimeout(renderRiverFlow,50);
   // Refresh highlights after all charts have re-rendered
   setTimeout(refreshHighlights, 500);
   var oc=allTracks.filter(function(t){return t.mainGenre==='Other';}).length;
@@ -2930,7 +2933,33 @@ function riverPlayNode(col,val,e){
 }
 
 function riverNodeClick(col,val,e){
-  riverToggleSel(col,val,e&&e.shiftKey);
+  if(e&&e.shiftKey){
+    riverToggleSel(col,val,true);
+  } else {
+    // Single click = open the track list modal for this group
+    var gCols2={male:'#5C8FD6',female:'#D45C8C','female-lead':'#C060B8','male-lead':'#4070C8',group:'#D4A85C',unknown:'#9A9A9A'};
+    var GENRE_MAP2=window.GENRE_MAP||{};
+    if(col==='gender'){
+      var hex=gCols2[val]||'#888';
+      var lbl=val.charAt(0).toUpperCase()+val.slice(1);
+      var pool=allTracks.filter(function(t){return t.gender===val;});
+      openGMWithPool('gender',val,hex,lbl+' Artists',pool);
+    } else if(col==='genre'){
+      var gc2=GENRE_MAP2[val];
+      var col2=gc2?gc2.color:'#888';
+      var pool2=allTracks.filter(function(t){return t.mainGenre===val;});
+      openGMWithPool('genre',val,col2,val,pool2);
+    } else if(col==='time'){
+      // time is decade (e.g. "2010s") or year (e.g. "2013")
+      var isDecade=val.indexOf('s')>=0;
+      var pool3=allTracks.filter(function(t){
+        if(!t.year)return false;
+        if(isDecade)return (Math.floor(t.year/10)*10)+'s'===val;
+        return String(t.year)===val;
+      });
+      openGMWithPool('year',val,'#9B7DD4',val+' Tracks',pool3);
+    }
+  }
 }
 
 function renderRiverFlow(){
@@ -3116,13 +3145,16 @@ function renderRiverFlow(){
   });
 
   svg.innerHTML=html;
-  // Wire events via delegation
-  svg.addEventListener('click',function(e){
-    var playG=e.target.closest('[data-playcol]');
-    if(playG){e.stopPropagation();riverPlayNode(playG.getAttribute('data-playcol'),playG.getAttribute('data-playkey'),e);return;}
-    var nodeG=e.target.closest('[data-col]');
-    if(nodeG){riverNodeClick(nodeG.getAttribute('data-col'),nodeG.getAttribute('data-key'),e);}
-  });
+  // Wire events via delegation — only add once
+  if(!svg._clickWired){
+    svg._clickWired=true;
+    svg.addEventListener('click',function(e){
+      var playG=e.target.closest('[data-playcol]');
+      if(playG&&!e.shiftKey){e.stopPropagation();riverPlayNode(playG.getAttribute('data-playcol'),playG.getAttribute('data-playkey'),e);return;}
+      var nodeG=e.target.closest('[data-col]');
+      if(nodeG){riverNodeClick(nodeG.getAttribute('data-col'),nodeG.getAttribute('data-key'),e);}
+    });
+  }
 }
 
 // ══ NEXUS WEB ══════════════════════════════════
@@ -3242,13 +3274,16 @@ function renderNexusWeb(){
   html+='<text x="'+(cx-dR-15)+'" y="'+(cy-dR-15)+'" font-size="10" fill="var(--muted)">gender</text>';
 
   svg.innerHTML=html;
-  svg.addEventListener('click',function(e){
-    var g=e.target.closest('[data-ntype]');if(!g)return;
-    var t=g.getAttribute('data-ntype'),v=g.getAttribute('data-nval');
-    if(t==='genre')spPlayGenre(v);
-    else if(t==='gender')spPlayByGender(v);
-    else if(t==='year')spPlayByYear(+v);
-  });
+  if(!svg._clickWired){
+    svg._clickWired=true;
+    svg.addEventListener('click',function(e){
+      var g=e.target.closest('[data-ntype]');if(!g)return;
+      var t=g.getAttribute('data-ntype'),v=g.getAttribute('data-nval');
+      if(t==='genre')spPlayGenre(v);
+      else if(t==='gender')spPlayByGender(v);
+      else if(t==='year')spPlayByYear(+v);
+    });
+  }
 }
 
 // Hook into highlightPlayingTrack so river/nexus update when song changes
