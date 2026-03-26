@@ -1440,129 +1440,151 @@ function selectSpPlaylist(el, id, name, count) {
 async function importSelectedPlaylist() {
   if (!_spSelectedPlaylist) return;
   var pl = _spSelectedPlaylist;
-  // Show progress, hide grid
   document.getElementById('sp-pl-grid').style.display = 'none';
   document.getElementById('sp-import-search').style.display = 'none';
   var prog = document.getElementById('sp-import-progress');
   prog.style.display = 'flex';
-  setSpImportProgress('Fetching tracks from Spotify…', 5);
+  setSpImportProgress('Connecting to Spotify…', 5);
 
   try {
     await ensureToken();
-    // 0. Get real track count if we don't have it
-    if(!pl.count){
-      var meta = await fetch('https://api.spotify.com/v1/playlists/'+pl.id+'?fields=tracks(total)',{headers:{'Authorization':'Bearer '+spToken}});
-      if(meta.ok){var md=await meta.json();pl.count=md.tracks&&md.tracks.total||0;}
-    }
-    setSpImportProgress('Fetching '+pl.count+' tracks from Spotify…', 5);
-    // 1. Fetch all tracks in pages of 100
-    var items = [];
-    // 1. Fetch all tracks — simple URL, no fields restriction that can fail
+
+    // ── Step 1: Fetch tracks (pages of 100, no fields filter)
     var items = [];
     var url = 'https://api.spotify.com/v1/playlists/' + pl.id + '/tracks?limit=100';
-    var fetched = 0;
     while (url) {
       var r = await fetch(url, { headers: { 'Authorization': 'Bearer ' + spToken } });
-      if (!r.ok) {
-        var errText = await r.text();
-        throw new Error('Spotify returned ' + r.status + ': ' + errText.slice(0,100));
-      }
+      if (r.status === 403) throw new Error('This playlist is private or restricted. Try one of your own playlists.');
+      if (!r.ok) throw new Error('Spotify error ' + r.status);
       var d = await r.json();
-      var valid = (d.items || []).filter(function(i) { return i && i.track && i.track.name && !i.is_local; });
-      items = items.concat(valid);
-      fetched = items.length;
+      items = items.concat((d.items||[]).filter(function(i){ return i&&i.track&&i.track.name&&!i.is_local; }));
       url = d.next || null;
-      setSpImportProgress('Fetching tracks… ' + fetched + (pl.count ? ' / ' + pl.count : ''), Math.min(45, 5 + fetched / Math.max(pl.count || fetched, 1) * 40));
+      setSpImportProgress('Loading tracks… ' + items.length, 5 + Math.min(60, items.length / 3));
     }
+    if (!items.length) throw new Error('No playable tracks found.');
 
-    if (!items.length) throw new Error('No playable tracks found in this playlist');
-
-    setSpImportProgress('Fetching artist genres…', 48);
-
-    // 2. Fetch artist genres in parallel batches of 50 (much faster)
-    var artistIds = [];
-    var seenIds = {};
-    items.forEach(function(i) {
-      var id = i.track.artists && i.track.artists[0] && i.track.artists[0].id;
-      if (id && !seenIds[id]) { seenIds[id] = true; artistIds.push(id); }
+    // ── Step 2: Fetch artist genres in parallel (best-effort, fast)
+    setSpImportProgress('Fetching genres…', 70);
+    var seenIds = {}, artistIds = [];
+    items.forEach(function(i){
+      var id = i.track.artists&&i.track.artists[0]&&i.track.artists[0].id;
+      if(id&&!seenIds[id]){seenIds[id]=true;artistIds.push(id);}
     });
     var artistGenreMap = {};
-    var genreBatches = [];
-    for (var ai = 0; ai < artistIds.length; ai += 50) {
-      genreBatches.push(artistIds.slice(ai, ai + 50));
-    }
-    await Promise.all(genreBatches.map(function(batch) {
-      return fetch('https://api.spotify.com/v1/artists?ids=' + batch.join(','), { headers: { 'Authorization': 'Bearer ' + spToken } })
-        .then(function(ar) { return ar.ok ? ar.json() : {artists:[]}; })
-        .then(function(ad) { (ad.artists||[]).forEach(function(a) { if(a) artistGenreMap[a.id] = a.genres||[]; }); })
+    var batches = [];
+    for(var ai=0;ai<artistIds.length;ai+=50) batches.push(artistIds.slice(ai,ai+50));
+    await Promise.all(batches.map(function(batch){
+      return fetch('https://api.spotify.com/v1/artists?ids='+batch.join(','),{headers:{'Authorization':'Bearer '+spToken}})
+        .then(function(ar){return ar.ok?ar.json():{artists:[]};})
+        .then(function(ad){(ad.artists||[]).forEach(function(a){if(a)artistGenreMap[a.id]=a.genres||[];});})
         .catch(function(){});
     }));
 
-    // 3. Build track objects
-    var tracks = items.map(function(item) {
+    // ── Step 3: Build tracks
+    setSpImportProgress('Building playlist…', 90);
+    var tracks = items.map(function(item){
       var t = item.track;
-      var artistId = t.artists && t.artists[0] && t.artists[0].id;
-      var genreTags = artistId ? (artistGenreMap[artistId] || []) : [];
-      var releaseDate = t.album && t.album.release_date ? t.album.release_date : '';
-      var year = releaseDate ? parseInt(releaseDate.split('-')[0]) : null;
-      var imageUrl = t.album && t.album.images && t.album.images[0] ? t.album.images[0].url : '';
+      var aid = t.artists&&t.artists[0]&&t.artists[0].id;
+      var tags = aid?(artistGenreMap[aid]||[]):[];
+      var rd = t.album&&t.album.release_date||'';
+      var yr = rd?parseInt(rd.split('-')[0]):null;
       return {
-        name: t.name,
-        artistName: (t.artists||[]).map(function(a) { return a.name; }).join(', '),
-        album: t.album ? t.album.name : '',
-        durationMs: t.duration_ms || 0,
-        genres: genreTags,
-        mainGenre: mapGenreFromTags(genreTags),
-        spotifyYear: year,
-        originalYear: null,
-        year: year,
-        spotifyUri: t.uri || '',
-        imageUrl: imageUrl,
-        gender: 'unknown',
-        wikiUrl: '',
-        popularity: t.popularity || 0,
+        name:t.name,
+        artistName:(t.artists||[]).map(function(a){return a.name;}).join(', '),
+        album:t.album?t.album.name:'',
+        durationMs:t.duration_ms||0,
+        genres:tags,
+        mainGenre:mapGenreFromTags(tags),
+        spotifyYear:yr, originalYear:null, year:yr,
+        spotifyUri:t.uri||'',
+        imageUrl:t.album&&t.album.images&&t.album.images[0]?t.album.images[0].url:'',
+        gender:'unknown', wikiUrl:'', popularity:t.popularity||0,
       };
     });
 
-    setSpImportProgress('Running AI enrichment…', 62);
+    setSpImportProgress('Done!', 100);
+    await sleep(300);
 
-    // 4. Run same AI pipeline as CSV import
-    var hasAI = !!(PROXY_URL || APP_ANTHROPIC_KEY || localStorage.getItem('anthropic_key'));
-    if (hasAI) {
-      var names = [...new Set(tracks.map(function(t) { return t.artistName; }))];
-      setSpImportProgress('AI: detecting artist genders…', 65);
-      var gm = await detectGenders(names, null);
-      tracks.forEach(function(t) { t.gender = gm[t.artistName] || 'unknown'; });
-      var others = tracks.filter(function(t) { return t.mainGenre === 'Other'; });
-      if (others.length > 0 && others.length <= 80) {
-        setSpImportProgress('AI: classifying ' + others.length + ' genres…', 78);
-        var fixes = await aiClassifyGenres(others, null);
-        fixes.forEach(function(f) {
-          var tr = tracks.find(function(x) { return x.name === f.name && x.artistName === f.artist; });
-          if (tr && f.genre && f.genre !== 'Other') tr.mainGenre = f.genre;
-        });
-      }
-    }
-
-    setSpImportProgress('Building dashboard…', 95);
-    await sleep(200);
-
-    // 5. Launch dashboard
+    // ── Step 4: Launch dashboard immediately
     closeModal('sp-import-modal');
     allTracks = tracks;
     filteredTracks = tracks.slice();
     currentPlaylistName = pl.name;
     currentSavedIdx = -1;
-    document.getElementById('btn-update') && (document.getElementById('btn-update').style.display = 'none');
+    var ub=document.getElementById('btn-update');if(ub)ub.style.display='none';
     initDashboard(pl.name);
+
+    // ── Step 5: Show optional "Enhance" prompt after dashboard is visible
+    var hasAI = !!(PROXY_URL||APP_ANTHROPIC_KEY||localStorage.getItem('anthropic_key'));
+    setTimeout(function(){ showEnhancePrompt(tracks, hasAI); }, 800);
 
   } catch(err) {
     console.error('Import failed:', err);
-    // Reset modal state
     document.getElementById('sp-pl-grid').style.display = '';
     document.getElementById('sp-import-search').style.display = '';
     prog.style.display = 'none';
-    document.getElementById('sp-pl-grid').innerHTML = '<div style="padding:20px;text-align:center;color:#e8472a;font-size:.82rem;">Import failed: ' + esc(err.message) + '. Please try again.</div>';
+    setSpPickerMsg('Import failed: ' + err.message, 'Try again', function(){
+      prog.style.display='none';
+      document.getElementById('sp-pl-grid').style.display='';
+      document.getElementById('sp-import-search').style.display='';
+    });
+  }
+}
+
+function showEnhancePrompt(tracks, hasAI) {
+  // Count how many tracks need enrichment
+  var unknownGenders = tracks.filter(function(t){return t.gender==='unknown';}).length;
+  var otherGenres = tracks.filter(function(t){return t.mainGenre==='Other';}).length;
+  if (!unknownGenders && !otherGenres) return; // already clean
+
+  var modal = document.getElementById('enhance-modal');
+  if (!modal) return;
+  var estSecs = Math.ceil(unknownGenders / 70) * 8 + Math.ceil(otherGenres / 40) * 6;
+  var estLabel = estSecs < 60 ? '~' + estSecs + ' seconds' : '~' + Math.ceil(estSecs/60) + ' min';
+
+  document.getElementById('enhance-summary').textContent =
+    unknownGenders + ' artists need gender detection · ' + otherGenres + ' tracks need genre refinement';
+  document.getElementById('enhance-time').textContent = 'Estimated time: ' + estLabel;
+
+  if (!hasAI) {
+    document.getElementById('enhance-ai-note').style.display = 'block';
+    document.getElementById('enhance-go-btn').disabled = true;
+    document.getElementById('enhance-go-btn').style.opacity = '.4';
+  } else {
+    document.getElementById('enhance-ai-note').style.display = 'none';
+    document.getElementById('enhance-go-btn').disabled = false;
+    document.getElementById('enhance-go-btn').style.opacity = '1';
+  }
+  openModal('enhance-modal');
+}
+
+async function runEnhancement() {
+  closeModal('enhance-modal');
+  showLoading('Running AI enrichment…'); setProgress(10);
+  try {
+    var names = [];
+    var seen = {};
+    allTracks.forEach(function(t){if(!seen[t.artistName]){seen[t.artistName]=true;names.push(t.artistName);}});
+    setLoadingText('AI: detecting genders for ' + names.length + ' artists…'); setProgress(20);
+    var gm = await detectGenders(names, null);
+    allTracks.forEach(function(t){t.gender=gm[t.artistName]||'unknown';});
+    var others = allTracks.filter(function(t){return t.mainGenre==='Other';});
+    if (others.length > 0 && others.length <= 80) {
+      setLoadingText('AI: classifying ' + others.length + ' genres…'); setProgress(70);
+      var fixes = await aiClassifyGenres(others, null);
+      fixes.forEach(function(f){
+        var tr = allTracks.find(function(x){return x.name===f.name&&x.artistName===f.artist;});
+        if(tr&&f.genre&&f.genre!=='Other')tr.mainGenre=f.genre;
+      });
+    }
+    setProgress(100); setLoadingText('Done!');
+    await sleep(400);
+    hideLoading();
+    filteredTracks = allTracks.slice();
+    renderGenderBars(); renderGenreTiles(); renderYearChart(); updateAllKPIs(); renderTable();
+  } catch(e) {
+    hideLoading();
+    alert('Enhancement failed: ' + e.message);
   }
 }
 
@@ -3126,6 +3148,21 @@ function _syncVizPanel(){/* no-op, now fullscreen */}
   <div style="display:flex;gap:8px;justify-content:flex-end;">
     <button onclick="closeModal('exportify-modal')" style="background:none;border:1px solid var(--border);color:var(--text2);cursor:pointer;padding:8px 16px;border-radius:99px;font-family:'Space Grotesk',sans-serif;font-size:.82rem;">Close</button>
     <a href="https://exportify.net" target="_blank" style="background:var(--sp);color:#000;border:none;cursor:pointer;font-weight:700;padding:8px 20px;border-radius:99px;font-family:'Space Grotesk',sans-serif;font-size:.82rem;text-decoration:none;display:inline-flex;align-items:center;">Open Exportify ↗</a>
+  </div>
+</div></div></div>
+
+<!-- ENHANCE MODAL -->
+<div id="enhance-modal" style="display:none"><div class="modal-backdrop" onclick="closeModal('enhance-modal')"><div class="sm-modal" style="max-width:420px;padding:24px;" onclick="event.stopPropagation()">
+  <h3 style="font-family:'Syne',sans-serif;font-size:1.2rem;margin-bottom:6px;">✨ Enhance this playlist?</h3>
+  <p style="font-size:.8rem;color:var(--text2);line-height:1.7;margin-bottom:14px;">Your playlist loaded! AI can detect artist genders and refine genre classifications for more accurate stats.</p>
+  <div style="background:var(--surface2);border-radius:8px;padding:12px 14px;margin-bottom:14px;display:flex;flex-direction:column;gap:4px;">
+    <div id="enhance-summary" style="font-size:.78rem;color:var(--text2);"></div>
+    <div id="enhance-time" style="font-size:.72rem;color:var(--muted);font-family:'Space Grotesk',sans-serif;"></div>
+  </div>
+  <div id="enhance-ai-note" style="display:none;font-size:.74rem;color:var(--muted);background:rgba(240,180,41,.08);border:1px solid rgba(240,180,41,.2);border-radius:8px;padding:10px 12px;margin-bottom:12px;">⚠ Add your Anthropic API key in Settings to use AI enhancement.</div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;">
+    <button onclick="closeModal('enhance-modal')" style="background:none;border:1px solid var(--border);color:var(--text2);cursor:pointer;padding:8px 16px;border-radius:99px;font-family:'Space Grotesk',sans-serif;font-size:.82rem;">Skip for now</button>
+    <button id="enhance-go-btn" onclick="closeModal('enhance-modal');runEnhancement();" style="background:var(--sp);color:#000;border:none;cursor:pointer;font-weight:700;padding:8px 20px;border-radius:99px;font-family:'Space Grotesk',sans-serif;font-size:.82rem;">Enhance ✨</button>
   </div>
 </div></div></div>
 
