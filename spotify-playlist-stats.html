@@ -3152,13 +3152,25 @@ function renderRiverFlow(){
         // Avatar glow: 4 layers — fat diffuse base + mid + bright spine + fast moving particles
         var path='M'+x1+' '+(y1m-h1/2)+' C'+cp1x+' '+(y1m-h1/2)+' '+cp2x+' '+(y2m-h2/2)+' '+x2+' '+(y2m-h2/2)+' L'+x2+' '+(y2m+h2/2)+' C'+cp2x+' '+(y2m+h2/2)+' '+cp1x+' '+(y1m+h1/2)+' '+x1+' '+(y1m+h1/2)+'Z';
         var cpath='M'+x1+' '+y1m+' C'+cp1x+' '+y1m+' '+cp2x+' '+y2m+' '+x2+' '+y2m;
-        html+='<path d="'+path+'" fill="'+col+'" opacity="0.12"/>'; // ambient base
-        html+='<path d="'+path+'" fill="'+col+'" opacity="0.25"/>'; // mid layer
-        html+='<path d="'+path+'" fill="'+col+'" opacity="0.5"/>'; // bright fill
-        // Spine: animated flowing line
-        html+='<path d="'+cpath+'" fill="none" stroke="'+col+'" stroke-width="'+(Math.max(2,h1*0.6))+'" stroke-opacity="0.85" stroke-dasharray="30 20" stroke-linecap="round" class="river-flow-active"/>';
-        html+='<path d="'+cpath+'" fill="none" stroke="#fff" stroke-width="'+(Math.max(1,h1*0.2))+'" stroke-opacity="0.5" stroke-dasharray="15 35" stroke-linecap="round" class="river-flow-active-fast"/>';
-        html+='<path d="'+cpath+'" fill="none" stroke="'+col+'" stroke-width="'+(Math.max(3,h1*0.8))+'" stroke-opacity="0.2" stroke-dasharray="60 40" stroke-linecap="round" class="river-flow-active-slow"/>';
+        // Stroke-only tendrils replacing old filled approach
+        var offsets2=[-0.38,-0.22,-0.08,0.08,0.22,0.38];
+        var tc2=[col,'#fff',col,'#adf',col,'#fff'];
+        var tw2=[0.7,0.3,0.9,0.25,0.6,0.2];
+        var td2=['8 28','4 40','12 22','6 50','10 18','3 45'];
+        var cls2=['rf-a','rf-d','rf-b','rf-c','rf-a','rf-d'];
+        offsets2.forEach(function(off,i){
+          var yo1=y1m+(h1*off),yo2=y2m+(h2*off);
+          html+='<path d="M'+x1+' '+yo1+' C'+cp1x+' '+yo1+' '+cp2x+' '+yo2+' '+x2+' '+yo2+'"'
+            +' fill="none" stroke="'+tc2[i]+'" stroke-width="'+tw2[i]+'"'
+            +' stroke-opacity="'+(i%2===1?0.6:0.45)+'" stroke-dasharray="'+td2[i]+'"'
+            +' stroke-linecap="round" class="'+cls2[i]+'"/>';
+        });
+        html+='<path d="M'+x1+' '+y1m+' C'+cp1x+' '+y1m+' '+cp2x+' '+y2m+' '+x2+' '+y2m+'"'
+          +' fill="none" stroke="'+col+'" stroke-width="'+(Math.max(1.5,h1*0.25))+'"'
+          +' stroke-opacity="0.9" stroke-dasharray="20 12" stroke-linecap="round" class="rf-b"/>';
+        html+='<path d="M'+x1+' '+y1m+' C'+cp1x+' '+y1m+' '+cp2x+' '+y2m+' '+x2+' '+y2m+'"'
+          +' fill="none" stroke="#fff" stroke-width="'+(Math.max(0.4,h1*0.07))+'"'
+          +' stroke-opacity="0.7" stroke-dasharray="5 25" stroke-linecap="round" class="rf-d"/>';
       } else {
         var alpha=selActive?0.55:isAnySel()?0.06:0.18;
         html+='<path d="M'+x1+' '+(y1m-h1/2)+' C'+cp1x+' '+(y1m-h1/2)+' '+cp2x+' '+(y2m-h2/2)+' '+x2+' '+(y2m-h2/2)+' L'+x2+' '+(y2m+h2/2)+' C'+cp2x+' '+(y2m+h2/2)+' '+cp1x+' '+(y1m+h1/2)+' '+x1+' '+(y1m+h1/2)+'Z" fill="'+col+'" opacity="'+alpha+'"/>';
@@ -3189,9 +3201,7 @@ function renderRiverFlow(){
       var selActive=isAnySel()&&(isSelected('genre',genre[0])||isSelected('time',tm[0]));
 
       if(isPlay){
-        var path='M'+x1+' '+(y1m-h1/2)+' C'+cp1x+' '+(y1m-h1/2)+' '+cp2x+' '+(y2m-h2/2)+' '+x2+' '+(y2m-h2/2)+' L'+x2+' '+(y2m+h2/2)+' C'+cp2x+' '+(y2m+h2/2)+' '+cp1x+' '+(y1m+h1/2)+' '+x1+' '+(y1m+h1/2)+'Z';
-        html+='<path d="'+path+'" fill="'+col+'" opacity="0.07"/>';
-        html+='<path d="'+path+'" fill="'+col+'" opacity="0.15"/>';
+        // Stroke-only tendrils — no filled shapes
         var offsets=[-0.42,-0.3,-0.18,-0.06,0.06,0.18,0.3,0.42];
         var tenColors2=[col,'#fdf',col,'#aff',col,'#ffd',col,'#adf'];
         var tenWidths2=[0.6,0.25,0.8,0.2,0.7,0.3,0.5,0.2];
