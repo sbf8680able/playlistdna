@@ -499,7 +499,7 @@ html,body{height:100%;overflow-x:hidden;}
     </div>
     <div class="sb-divider"></div>
     <div class="sb-section">Spotify Playback</div>
-    <button class="sb-sp-btn" id="sb-sp-btn" onclick="startSpotifyAuth()" data-tip="Connect Spotify">
+    <button class="sb-sp-btn" id="sb-sp-btn" onclick="handleSpotifyBtnClick()" data-tip="Connect Spotify">
       <span class="sb-icon" id="sb-sp-icon">🎵</span><span class="sb-label" id="sb-sp-label">Connect Spotify</span>
     </button>
     <div id="sb-sp-status" style="font-size:.66rem;color:var(--muted);padding:4px 12px;display:none;"></div>
@@ -912,15 +912,10 @@ var lyricsTrackName='';
 
 // ══ SPOTIFY SDK STATE
 // ══ DEPLOYMENT CONFIG ════════════════════════════════════
-// Fill these in before sharing. When set, users never see
-// the Client ID / Redirect URI form — one click to connect.
-var APP_CLIENT_ID    = '2034d83672c5415ba285134a9fff7b69';  // Your Spotify App Client ID
-var APP_REDIRECT_URI = 'https://sbf8680able.github.io/playlistdna/spotify-playlist-stats.html';  // e.g. https://yourname.github.io/playlistdna/spotify-playlist-stats.html
-// Proxy URL: deploy worker.js to Cloudflare Workers, paste the URL here.
-// When set, the Anthropic API key input disappears and AI features
-// just work for everyone — key stays server-side, never in the browser.
-var PROXY_URL = 'https://playlistdna-proxy.sbf8680able.workers.dev'; // e.g. 'https://playlistdna-proxy.yourname.workers.dev'
-var APP_ANTHROPIC_KEY = ''; // Only use this if NOT using the proxy (less secure)
+var APP_CLIENT_ID    = '2034d83672c5415ba285134a9fff7b69';
+var APP_REDIRECT_URI = 'https://sbf8680able.github.io/playlistdna/spotify-playlist-stats.html';
+var PROXY_URL        = 'https://playlistdna-proxy.sbf8680able.workers.dev';
+var APP_ANTHROPIC_KEY = ''; // Not needed — proxy handles it
 // ══════════════════════════════════════════════════════════
 
 var spPlayer=null, spDeviceId=null, spToken=null, spClientId='';
@@ -1318,18 +1313,53 @@ async function openSpotifyImport() {
   await loadSpPlaylists();
 }
 
+function setSpPickerMsg(msg, btnLabel, btnFn) {
+  window._spPickerBtnFn = btnFn;
+  var g = document.getElementById('sp-pl-grid');
+  if(!g) return;
+  g.innerHTML = '';
+  var wrap = document.createElement('div');
+  wrap.style.cssText = 'padding:20px;text-align:center;';
+  var txt = document.createElement('div');
+  txt.style.cssText = 'font-size:.82rem;color:var(--muted);margin-bottom:8px;';
+  txt.textContent = msg;
+  wrap.appendChild(txt);
+  if(btnLabel){
+    var btn = document.createElement('button');
+    btn.textContent = btnLabel;
+    btn.style.cssText = 'background:var(--sp);color:#000;border:none;cursor:pointer;font-weight:700;padding:7px 16px;border-radius:99px;font-size:.78rem;';
+    btn.onclick = function(){ if(window._spPickerBtnFn) window._spPickerBtnFn(); };
+    wrap.appendChild(btn);
+  }
+  g.appendChild(wrap);
+}
 async function loadSpPlaylists() {
   await ensureToken();
+  if(!spToken){
+    setSpPickerMsg('Not connected to Spotify.','Reconnect',function(){closeModal('sp-import-modal');startSpotifyAuth();});
+    return;
+  }
   var all = [];
   var url = 'https://api.spotify.com/v1/me/playlists?limit=50';
-  while (url) {
+  var attempts = 0;
+  while (url && attempts < 20) {
+    attempts++;
     var r = await fetch(url, { headers: { 'Authorization': 'Bearer ' + spToken } });
-    if (!r.ok) break;
+    if(r.status===401){
+      localStorage.removeItem('sp_token');localStorage.removeItem('sp_token_exp');
+      setSpPickerMsg('Session expired — please reconnect.','Reconnect Spotify',function(){closeModal('sp-import-modal');localStorage.removeItem('sp_refresh');startSpotifyAuth();});
+      return;
+    }
+    if(!r.ok) break;
     var d = await r.json();
     all = all.concat(d.items || []);
     url = d.next || null;
   }
   _spPlaylists = all.filter(Boolean);
+  if(!_spPlaylists.length){
+    setSpPickerMsg('No playlists found. Spotify may need updated permissions.','Reconnect Spotify',function(){closeModal('sp-import-modal');localStorage.removeItem('sp_refresh');startSpotifyAuth();});
+    return;
+  }
   renderSpPlaylists(_spPlaylists);
 }
 
@@ -1575,6 +1605,14 @@ async function aiClassifyGenres(tracks,key){
 }
 
 // ══ SPOTIFY AUTH (PKCE)
+function handleSpotifyBtnClick(){
+  // If already connected, just open the import picker
+  if(spToken&&spDeviceId){openSpotifyImport();return;}
+  // If we have a token but no device yet, player is still initialising
+  if(spToken){openSpotifyImport();return;}
+  // Not connected — start auth
+  startSpotifyAuth();
+}
 function startSpotifyAuth(){
   var clientId=APP_CLIENT_ID||localStorage.getItem('sp_client_id')||'';
   var redirectUri=APP_REDIRECT_URI||localStorage.getItem('sp_redirect_uri')||'';
@@ -1611,7 +1649,7 @@ async function _doAuthWith(clientId, redirectUri){
   var challenge=btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
   sessionStorage.setItem('sp_verifier',verifier);
   sessionStorage.setItem('sp_redirect',redirectUri);
-  var scope='streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state user-read-currently-playing';
+  var scope='streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative';
   window.location.href='https://accounts.spotify.com/authorize?response_type=code&client_id='+clientId+'&scope='+encodeURIComponent(scope)+'&redirect_uri='+encodeURIComponent(redirectUri)+'&code_challenge_method=S256&code_challenge='+challenge;
 }
 function cancelAuth(){
