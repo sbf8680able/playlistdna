@@ -356,11 +356,14 @@ html,body{height:100%;overflow-x:hidden;}
 #tab-nexus{display:none;}
 #tab-songs{display:none;}
 #tab-river.active,#tab-nexus.active,#tab-songs.active{display:block!important;}
-@keyframes flowAnim{to{stroke-dashoffset:-40}}
-@keyframes glowPulse{0%,100%{opacity:.7;filter:blur(0px)}50%{opacity:1;filter:blur(1px)}}
+@keyframes flowAnim{to{stroke-dashoffset:-60}}
+@keyframes flowAnimSlow{to{stroke-dashoffset:-90}}
+@keyframes flowAnimFast{to{stroke-dashoffset:-30}}
 @keyframes nodeGlow{0%,100%{opacity:.9}50%{opacity:1}}
 @keyframes hueRotate{from{filter:hue-rotate(0deg)}to{filter:hue-rotate(360deg)}}
-.river-flow-active{animation:flowAnim 2s linear infinite;}
+.river-flow-active{animation:flowAnim 1.8s linear infinite;}
+.river-flow-active-slow{animation:flowAnimSlow 2.8s linear infinite;}
+.river-flow-active-fast{animation:flowAnimFast 1.1s linear infinite;}
 .river-node-playing{animation:nodeGlow .8s ease-in-out infinite;}
 .insights-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;padding:4px 0;}
 .ins-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;}
@@ -3108,14 +3111,13 @@ function renderRiverFlow(){
   });
   html+='</defs>';
 
-  // ── FLOWS (gender → genre)
+  // ── FLOWS (gender → genre) — Avatar luminous streams
   genders.forEach(function(g){
     var gn=genderNodes.find(function(n){return n.key===g[0];});
     if(!gn)return;
     genres.forEach(function(genre){
       var genn=genreNodes.find(function(n){return n.key===genre[0];});
       if(!genn)return;
-      // Count tracks matching both
       var cnt=allTracks.filter(function(t){return t.gender===g[0]&&t.mainGenre===genre[0];}).length;
       if(!cnt)return;
       var frac1=cnt/g[1],frac2=cnt/genre[1];
@@ -3123,24 +3125,35 @@ function renderRiverFlow(){
       var h2=Math.max(2,(genn.y2-genn.y1)*frac2);
       var x1=cols[0]+colW,x2=cols[1];
       var y1m=(gn.y1+gn.y2)/2,y2m=(genn.y1+genn.y2)/2;
+      var cp1x=x1+120,cp2x=x2-120;
 
       var isPlay=(playing&&playing.gender===g[0]&&playing.mainGenre===genre[0]);
       var selActive=isAnySel()&&(isSelected('gender',g[0])||isSelected('genre',genre[0]));
-      var alpha=isPlay?0.85:selActive?0.65:isAnySel()?0.08:0.22;
       var col=gCols[g[0]]||'#888';
-      var dashAttr=isPlay?'stroke-dasharray="12 8" class="river-flow-active"':'';
 
-      html+='<path d="M'+x1+' '+(y1m-h1/2)+' C'+(x1+80)+' '+(y1m-h1/2)+' '+(x2-80)+' '+(y2m-h2/2)+' '+x2+' '+(y2m-h2/2)
-        +' L'+x2+' '+(y2m+h2/2)+' C'+(x2-80)+' '+(y2m+h2/2)+' '+(x1+80)+' '+(y1m+h1/2)+' '+x1+' '+(y1m+h1/2)+'Z"'
-        +' fill="'+col+'" opacity="'+alpha+'" '+dashAttr+'/>';
+      if(isPlay){
+        // Avatar glow: 4 layers — fat diffuse base + mid + bright spine + fast moving particles
+        var path='M'+x1+' '+(y1m-h1/2)+' C'+cp1x+' '+(y1m-h1/2)+' '+cp2x+' '+(y2m-h2/2)+' '+x2+' '+(y2m-h2/2)+' L'+x2+' '+(y2m+h2/2)+' C'+cp2x+' '+(y2m+h2/2)+' '+cp1x+' '+(y1m+h1/2)+' '+x1+' '+(y1m+h1/2)+'Z';
+        var cpath='M'+x1+' '+y1m+' C'+cp1x+' '+y1m+' '+cp2x+' '+y2m+' '+x2+' '+y2m;
+        html+='<path d="'+path+'" fill="'+col+'" opacity="0.12"/>'; // ambient base
+        html+='<path d="'+path+'" fill="'+col+'" opacity="0.25"/>'; // mid layer
+        html+='<path d="'+path+'" fill="'+col+'" opacity="0.5"/>'; // bright fill
+        // Spine: animated flowing line
+        html+='<path d="'+cpath+'" fill="none" stroke="'+col+'" stroke-width="'+(Math.max(2,h1*0.6))+'" stroke-opacity="0.85" stroke-dasharray="30 20" stroke-linecap="round" class="river-flow-active"/>';
+        html+='<path d="'+cpath+'" fill="none" stroke="#fff" stroke-width="'+(Math.max(1,h1*0.2))+'" stroke-opacity="0.5" stroke-dasharray="15 35" stroke-linecap="round" class="river-flow-active-fast"/>';
+        html+='<path d="'+cpath+'" fill="none" stroke="'+col+'" stroke-width="'+(Math.max(3,h1*0.8))+'" stroke-opacity="0.2" stroke-dasharray="60 40" stroke-linecap="round" class="river-flow-active-slow"/>';
+      } else {
+        var alpha=selActive?0.55:isAnySel()?0.06:0.18;
+        html+='<path d="M'+x1+' '+(y1m-h1/2)+' C'+cp1x+' '+(y1m-h1/2)+' '+cp2x+' '+(y2m-h2/2)+' '+x2+' '+(y2m-h2/2)+' L'+x2+' '+(y2m+h2/2)+' C'+cp2x+' '+(y2m+h2/2)+' '+cp1x+' '+(y1m+h1/2)+' '+x1+' '+(y1m+h1/2)+'Z" fill="'+col+'" opacity="'+alpha+'"/>';
+      }
     });
   });
 
-  // ── FLOWS (genre → time)
+  // ── FLOWS (genre → time) — Avatar luminous streams
   genres.forEach(function(genre){
     var genn=genreNodes.find(function(n){return n.key===genre[0];});
     if(!genn)return;
-    times.forEach(function(tm,ti){
+    times.forEach(function(tm){
       var tn=timeNodes.find(function(n){return n.key===tm[0];});
       if(!tn)return;
       var cnt=allTracks.filter(function(t){
@@ -3153,15 +3166,24 @@ function renderRiverFlow(){
       var h2=Math.max(2,(tn.y2-tn.y1)*frac2);
       var x1=cols[1]+colW,x2=cols[2];
       var y1m=(genn.y1+genn.y2)/2,y2m=(tn.y1+tn.y2)/2;
-
+      var cp1x=x1+120,cp2x=x2-120;
+      var col=genreColor(genre[0]);
       var isPlay=(playing&&playing.mainGenre===genre[0]&&playingTime===tm[0]);
       var selActive=isAnySel()&&(isSelected('genre',genre[0])||isSelected('time',tm[0]));
-      var alpha=isPlay?0.85:selActive?0.65:isAnySel()?0.08:0.22;
-      var col=genreColor(genre[0]);
-      var dashAttr=isPlay?'stroke-dasharray="12 8" class="river-flow-active"':'';
-      html+='<path d="M'+x1+' '+(y1m-h1/2)+' C'+(x1+80)+' '+(y1m-h1/2)+' '+(x2-80)+' '+(y2m-h2/2)+' '+x2+' '+(y2m-h2/2)
-        +' L'+x2+' '+(y2m+h2/2)+' C'+(x2-80)+' '+(y2m+h2/2)+' '+(x1+80)+' '+(y1m+h1/2)+' '+x1+' '+(y1m+h1/2)+'Z"'
-        +' fill="'+col+'" opacity="'+alpha+'" '+dashAttr+'/>';
+
+      if(isPlay){
+        var path='M'+x1+' '+(y1m-h1/2)+' C'+cp1x+' '+(y1m-h1/2)+' '+cp2x+' '+(y2m-h2/2)+' '+x2+' '+(y2m-h2/2)+' L'+x2+' '+(y2m+h2/2)+' C'+cp2x+' '+(y2m+h2/2)+' '+cp1x+' '+(y1m+h1/2)+' '+x1+' '+(y1m+h1/2)+'Z';
+        var cpath='M'+x1+' '+y1m+' C'+cp1x+' '+y1m+' '+cp2x+' '+y2m+' '+x2+' '+y2m;
+        html+='<path d="'+path+'" fill="'+col+'" opacity="0.12"/>';
+        html+='<path d="'+path+'" fill="'+col+'" opacity="0.25"/>';
+        html+='<path d="'+path+'" fill="'+col+'" opacity="0.5"/>';
+        html+='<path d="'+cpath+'" fill="none" stroke="'+col+'" stroke-width="'+(Math.max(2,h1*0.6))+'" stroke-opacity="0.85" stroke-dasharray="30 20" stroke-linecap="round" class="river-flow-active"/>';
+        html+='<path d="'+cpath+'" fill="none" stroke="#fff" stroke-width="'+(Math.max(1,h1*0.2))+'" stroke-opacity="0.5" stroke-dasharray="15 35" stroke-linecap="round" class="river-flow-active-fast"/>';
+        html+='<path d="'+cpath+'" fill="none" stroke="'+col+'" stroke-width="'+(Math.max(3,h1*0.8))+'" stroke-opacity="0.2" stroke-dasharray="60 40" stroke-linecap="round" class="river-flow-active-slow"/>';
+      } else {
+        var alpha=selActive?0.55:isAnySel()?0.06:0.18;
+        html+='<path d="M'+x1+' '+(y1m-h1/2)+' C'+cp1x+' '+(y1m-h1/2)+' '+cp2x+' '+(y2m-h2/2)+' '+x2+' '+(y2m-h2/2)+' L'+x2+' '+(y2m+h2/2)+' C'+cp2x+' '+(y2m+h2/2)+' '+cp1x+' '+(y1m+h1/2)+' '+x1+' '+(y1m+h1/2)+'Z" fill="'+col+'" opacity="'+alpha+'"/>';
+      }
     });
   });
 
@@ -3181,16 +3203,23 @@ function renderRiverFlow(){
       html+='<rect x="'+x+'" y="'+n.y1+'" width="'+colW+'" height="'+h+'" rx="6"'
         +' fill="'+col+'" opacity="'+alpha+'"'+strokeAttr+'/>';
       if(isPlay){
-        html+='<rect x="'+x+'" y="'+n.y1+'" width="'+colW+'" height="'+h+'" rx="6"'
-          +' fill="'+col+'" opacity="0.3" style="animation:hueRotate 3s linear infinite"/>';
+        // Pulsing stroke border — no CSS filter, no bleed
+        html+='<rect x="'+(x-2)+'" y="'+(n.y1-2)+'" width="'+(colW+4)+'" height="'+(h+4)+'" rx="8"'
+          +' fill="none" stroke="'+col+'" stroke-width="2.5" opacity="0.9">'
+          +'<animate attributeName="stroke-opacity" values="0.4;1;0.4" dur="1.4s" repeatCount="indefinite"/>'
+          +'<animate attributeName="stroke-width" values="1.5;3;1.5" dur="1.4s" repeatCount="indefinite"/>'
+          +'</rect>';
       }
       var label=n.key;
-      if(h>22){
-        html+='<text x="'+(x+colW/2)+'" y="'+(n.y1+Math.min(h/2,20))+'" text-anchor="middle" dominant-baseline="central"'
-          +' font-size="'+(h>40?12:10)+'" font-weight="600" fill="#fff" pointer-events="none">'+esc(label.slice(0,12))+'</text>';
-        if(h>40){
-          html+='<text x="'+(x+colW/2)+'" y="'+(n.y1+Math.min(h/2,20)+15)+'" text-anchor="middle" dominant-baseline="central"'
-            +' font-size="10" fill="rgba(255,255,255,.7)" pointer-events="none">'+n.count+'</text>';
+      // Always show label — scale font to fit
+      var fs=h>50?12:h>32?10:h>18?9:8;
+      var labelY=n.y1+h/2;
+      if(h>14){
+        html+='<text x="'+(x+colW/2)+'" y="'+(h>32?labelY-6:labelY)+'" text-anchor="middle" dominant-baseline="central"'
+          +' font-size="'+fs+'" font-weight="600" fill="#fff" pointer-events="none">'+esc(label)+'</text>';
+        if(h>32){
+          html+='<text x="'+(x+colW/2)+'" y="'+(labelY+8)+'" text-anchor="middle" dominant-baseline="central"'
+            +' font-size="9" fill="rgba(255,255,255,.65)" pointer-events="none">'+n.count+'</text>';
         }
       }
       // ▶ Play button
@@ -3301,20 +3330,23 @@ function renderNexusWeb(){
       var isPlay=playing&&playing.mainGenre===g[0]&&playing.gender===d[0];
       var col=genreColor(g[0]);
       var dashAttr=isPlay?'stroke-dasharray="10 6" class="river-flow-active"':'';
-      html+='<line x1="'+gn.x+'" y1="'+gn.y+'" x2="'+dn.x+'" y2="'+dn.y+'"'
-        +' stroke="'+col+'" stroke-width="'+(isPlay?w*2.5:w)+'" opacity="'+(isPlay?0.9:alpha)+'" '+dashAttr+'/>';
+      // Use curved path instead of straight line for style
+      var mx=(gn.x+dn.x)/2,my=(gn.y+dn.y)/2-30;
+      html+='<path d="M'+gn.x+' '+gn.y+' Q'+mx+' '+my+' '+dn.x+' '+dn.y+'"'
+        +' fill="none" stroke="'+col+'" stroke-width="'+(isPlay?w*3:Math.max(0.8,w))+'" opacity="'+(isPlay?0.9:Math.min(0.55,alpha*1.8))+'" '+dashAttr+' stroke-linecap="round"/>';
     });
   });
 
   // Genre nodes (inner)
   gNodes.forEach(function(g){
-    var r=9+g.count/14;
+    var r=11+g.count/12;
     var col=genreColor(g.name);
     var isPlay=playing&&playing.mainGenre===g.name;
     var lx=g.x+(g.x<cx?-(r+8):r+8),anchor=g.x<cx?'end':'start';
     html+='<g data-ntype="genre" data-nval="'+g.name.replace(/"/g,'&quot;')+'" style="cursor:pointer">';
-    html+='<circle cx="'+g.x+'" cy="'+g.y+'" r="'+(r+6)+'" fill="'+col+'" opacity="0.12"/>';
-    html+='<circle cx="'+g.x+'" cy="'+g.y+'" r="'+r+'" fill="'+col+'" opacity="0.92"'+(isPlay?' style="animation:hueRotate 3s linear infinite"':'')+'/>';
+    html+='<circle cx="'+g.x+'" cy="'+g.y+'" r="'+(r+10)+'" fill="'+col+'" opacity="0.18"/>';
+    html+='<circle cx="'+g.x+'" cy="'+g.y+'" r="'+r+'" fill="'+col+'" opacity="0.95"'+'/>';
+    if(isPlay){html+='<circle cx="'+g.x+'" cy="'+g.y+'" r="'+(r+4)+'" fill="none" stroke="'+col+'" stroke-width="2.5"><animate attributeName="r" values="'+(r+2)+';'+(r+7)+';'+(r+2)+'" dur="1.4s" repeatCount="indefinite"/><animate attributeName="stroke-opacity" values="0.8;0.2;0.8" dur="1.4s" repeatCount="indefinite"/></circle>';}
     html+='<text x="'+g.x+'" y="'+(g.y+1)+'" text-anchor="middle" dominant-baseline="central" font-size="9" font-weight="600" fill="#fff" pointer-events="none">'+g.count+'</text>';
     html+='</g>';
     html+='<text x="'+lx+'" y="'+(g.y+1)+'" text-anchor="'+anchor+'" dominant-baseline="central" font-size="11" font-weight="500" fill="var(--text)">'+esc(g.name)+'</text>';
@@ -3327,7 +3359,8 @@ function renderNexusWeb(){
     var isPlay=playing&&playing.gender===d.name;
     html+='<g data-ntype="gender" data-nval="'+d.name.replace(/"/g,'&quot;')+'" style="cursor:pointer">';
     html+='<circle cx="'+d.x+'" cy="'+d.y+'" r="'+(r+8)+'" fill="'+col+'" opacity="0.1"/>';
-    html+='<circle cx="'+d.x+'" cy="'+d.y+'" r="'+r+'" fill="'+col+'" opacity="0.25" stroke="'+col+'" stroke-width="2"'+(isPlay?' style="animation:hueRotate 3s linear infinite"':'')+'/>';
+    html+='<circle cx="'+d.x+'" cy="'+d.y+'" r="'+r+'" fill="'+col+'" opacity="0.25" stroke="'+col+'" stroke-width="2"/>';
+    if(isPlay){html+='<circle cx="'+d.x+'" cy="'+d.y+'" r="'+(r+5)+'" fill="none" stroke="'+col+'" stroke-width="2"><animate attributeName="r" values="'+(r+3)+';'+(r+9)+';'+(r+3)+'" dur="1.4s" repeatCount="indefinite"/><animate attributeName="stroke-opacity" values="0.9;0.1;0.9" dur="1.4s" repeatCount="indefinite"/></circle>';}
     html+='<text x="'+d.x+'" y="'+(d.y-6)+'" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="600" fill="var(--text)" pointer-events="none">'+d.name.charAt(0).toUpperCase()+d.name.slice(1)+'</text>';
     html+='<text x="'+d.x+'" y="'+(d.y+10)+'" text-anchor="middle" dominant-baseline="central" font-size="11" fill="var(--muted)" pointer-events="none">'+d.count+'</text>';
     html+='</g>';
