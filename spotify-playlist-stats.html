@@ -22,7 +22,38 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 
 /* LAYOUT */
 .app-shell{display:flex;min-height:100vh;}
-:root{--sb-w:220px;}
+:root{--sb-w:220px;--player-h:90px;}
+
+/* ══ CLEAN LAYOUT ══════════════════════════════════════════════ */
+html,body{height:100%;overflow:hidden;}
+.main-content{
+  position:fixed;
+  left:var(--sb-w);
+  top:0;
+  right:0;
+  bottom:0;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  transition:left .25s;
+}
+.sidebar.collapsed~.main-content,.main-content.sidebar-collapsed{left:48px;}
+#dashboard{display:flex;flex-direction:column;height:100%;overflow:hidden;}
+.dash-body{flex:1;display:flex;flex-direction:column;padding:0;min-height:0;overflow:hidden;}
+/* Views fill all space above player */
+#view-grid,#view-nexus,#view-songs{
+  display:none;
+  flex:1;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding-bottom:var(--player-h);
+}
+#view-grid.active,#view-nexus.active,#view-songs.active{display:flex;flex-direction:column;}
+#nexus-svg{width:100%;flex:1;min-height:460px;}
+/* Player pinned at bottom */
+.player-bar{position:fixed!important;bottom:0;left:var(--sb-w);right:0;z-index:100;transition:left .25s;}
+.sidebar.collapsed~.main-content .player-bar{left:48px;}
+
 .sidebar{width:var(--sb-w);min-width:var(--sb-w);background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:200;overflow:hidden;transition:width .25s,min-width .25s;}
 .sidebar.collapsed{width:52px;min-width:52px;}
 .sidebar-header{display:flex;align-items:center;justify-content:space-between;padding:14px 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
@@ -83,9 +114,9 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .sidebar.collapsed .no-saved{display:none;}
 
 /* MAIN */
-.main-content{margin-left:260px;flex:1;min-width:0;display:flex;flex-direction:column;min-height:100vh;padding-bottom:90px;transition:margin-left .25s,margin-right .25s;}
-.main-content.sb-collapsed{margin-left:52px;}
-.main-content.lyrics-open{margin-right:320px;}
+
+
+
 
 /* PLAYER BAR */
 .player-bar{display:none;position:fixed;bottom:0;left:260px;right:0;z-index:300;background:linear-gradient(135deg,#1c1a2e 0%,#16213e 50%,#0f3460 100%);border-top:2px solid rgba(29,185,84,.4);height:102px;transition:left .25s,right .25s;align-items:center;}
@@ -156,7 +187,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .btn-shuffle-all:hover{background:#1ed760;border-color:#1ed760;color:#000;}
 
 /* BODY */
-.dash-body{padding:13px 18px 0;}
+/* dash-body — layout handled above */
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:9px;margin-bottom:13px;}
 .kpi{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:12px 15px;position:relative;overflow:hidden;}
 .kpi-accent{position:absolute;top:0;left:0;right:0;height:3px;}
@@ -345,11 +376,11 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 /* ══ DYNAMIC LAYOUT ══ */
 html,body{height:100%;overflow-x:hidden;}
 .app-shell{min-height:100vh;}
-.main-content{margin-left:var(--sb-w);flex:1;min-width:0;display:block;min-height:100vh;overflow-y:auto;transition:margin-left .25s;}
-.main-content.sb-collapsed{margin-left:52px;}
-.main-content.lyrics-open{margin-right:320px;}
-#dashboard{display:block;}
-.dash-body{padding:8px 16px 0;}
+
+
+
+
+/* dash-body — layout handled above */
 #view-grid,#view-nexus,#view-songs{display:none;}
 
 
@@ -525,12 +556,7 @@ html,body{height:100%;overflow-x:hidden;}
 .sb-kpi-label{font-size:.57rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin-bottom:2px;}
 .sb-kpi-val{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:var(--text);line-height:1;}
 .sidebar.collapsed .sb-summary{display:none!important;}
-/* ── Full-height dashboard ── */
-#dashboard{display:flex;flex-direction:column;height:calc(100vh - 0px);}
-.dash-body{flex:1;display:flex;flex-direction:column;padding:8px 16px 0;min-height:0;}
-
-#view-grid,#view-nexus{}
-#nexus-svg{height:calc(100vh - 80px);min-height:460px;}
+/* layout handled by clean rules above */
 
 /* ── Grid View ── */
 .grid-table{border-collapse:separate;border-spacing:4px;width:100%;}
@@ -773,7 +799,7 @@ html,body{height:100%;overflow-x:hidden;}
       <div id="gnf-cnt" style="display:none"></div>
       <div id="yf-cnt" style="display:none"></div>
       <!-- views controlled from sidebar nav -->
-      <div id="view-grid" style="padding:12px 16px;overflow-y:auto;height:calc(100vh - 80px);">
+      <div id="view-grid" style="padding:12px 16px;">
         <div id="grid-year-bar" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
           <span style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-right:4px;">Year</span>
           <button onclick="gridFilterYear(null)" id="grid-yr-all" style="font-size:11px;padding:3px 10px;border-radius:99px;border:1px solid var(--sp);background:var(--sp);color:#000;font-weight:700;cursor:pointer;">All</button>
@@ -781,10 +807,10 @@ html,body{height:100%;overflow-x:hidden;}
         <div id="grid-matrix" style="overflow-x:auto;"></div>
         <div id="grid-playing-info" style="margin-top:12px;font-size:12px;color:var(--muted);min-height:20px;"></div>
       </div>
-      <div id="view-nexus" style="padding:0 0 12px;">
+      <div id="view-nexus">
         <svg id="nexus-svg" width="100%" viewBox="0 0 900 620" style="display:block;height:calc(100vh - 120px);min-height:500px;cursor:default;" preserveAspectRatio="xMidYMid meet"></svg>
       </div>
-      <div id="view-songs">
+      <div id="view-songs" style="">
         <div class="chart-panel songs-panel">
           <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;flex-wrap:wrap;">
             <div class="chart-title" style="margin:0">All Tracks</div>
