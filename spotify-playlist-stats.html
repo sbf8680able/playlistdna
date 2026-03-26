@@ -1520,14 +1520,32 @@ async function importSelectedPlaylist() {
 
   } catch(err) {
     console.error('Import failed:', err);
-    document.getElementById('sp-pl-grid').style.display = '';
-    document.getElementById('sp-import-search').style.display = '';
-    prog.style.display = 'none';
-    setSpPickerMsg('Import failed: ' + err.message, 'Try again', function(){
-      prog.style.display='none';
-      document.getElementById('sp-pl-grid').style.display='';
-      document.getElementById('sp-import-search').style.display='';
-    });
+    var prog2 = document.getElementById('sp-import-progress');
+    if(prog2) prog2.style.display = 'none';
+    var grid2 = document.getElementById('sp-pl-grid');
+    var search2 = document.getElementById('sp-import-search');
+    if(grid2) grid2.style.display = '';
+    if(search2) search2.style.display = '';
+
+    var is403 = err.message.indexOf('403') >= 0 || err.message.indexOf('private or restricted') >= 0;
+    if(is403){
+      setSpPickerMsg(
+        'Spotify refused access (403). Your token may be missing permissions.',
+        'Force Reconnect →',
+        function(){
+          closeModal('sp-import-modal');
+          // Clear ALL spotify tokens to force fresh auth with full scopes
+          ['sp_token','sp_token_exp','sp_refresh','sp_client_id'].forEach(function(k){localStorage.removeItem(k);});
+          startSpotifyAuth();
+        }
+      );
+    } else {
+      setSpPickerMsg(err.message, 'Go back', function(){
+        if(grid2)grid2.style.display='';
+        if(search2)search2.style.display='';
+        renderSpPlaylists(_spPlaylists);
+      });
+    }
   }
 }
 
