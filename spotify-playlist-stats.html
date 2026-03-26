@@ -165,10 +165,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .kpi-sub{font-size:.66rem;color:var(--muted);margin-top:2px;}
 
 /* TABS */
-.tab-bar{display:flex;gap:3px;margin-bottom:12px;background:var(--surface2);border-radius:10px;padding:3px;width:fit-content;}
-.tab{font-family:'Space Grotesk',sans-serif;font-size:.78rem;font-weight:600;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;padding:6px 16px;cursor:pointer;transition:all .15s;}
-.tab.active{color:var(--text);border-bottom-color:var(--sp);}
-.tab:hover:not(.active){color:var(--text2);}
+/* tabs removed — sidebar nav used instead */
 #tab-charts,#tab-songs{/* see dynamic layout */}
 /* tab active handled in dynamic layout */
 
@@ -353,10 +350,10 @@ html,body{height:100%;overflow-x:hidden;}
 .main-content.lyrics-open{margin-right:320px;}
 #dashboard{display:block;}
 .dash-body{padding:8px 16px 0;}
-#tab-river{display:none;}
-#tab-nexus{display:none;}
-#tab-songs{display:none;}
-#tab-river.active,#tab-nexus.active,#tab-songs.active{display:block!important;}
+#view-river,#view-nexus,#view-songs{display:none;}
+
+
+#view-river.active,#view-nexus.active,#view-songs.active{display:block!important;}
 @keyframes flowA{to{stroke-dashoffset:-80}}
 @keyframes flowB{to{stroke-dashoffset:-50}}
 @keyframes flowC{to{stroke-dashoffset:-120}}
@@ -394,7 +391,7 @@ html,body{height:100%;overflow-x:hidden;}
 .ins-decade-bar{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--blue),var(--purple));}
 .ins-decade-val{font-size:.7rem;color:var(--muted);width:50px;text-align:right;}
 .kpi-row{}
-.tab-bar{}
+
 .charts-grid{}
 .chart-panel.year-panel{}
 .year-chart-wrap{position:relative;min-height:185px;}
@@ -450,7 +447,7 @@ html,body{height:100%;overflow-x:hidden;}
 [data-theme="dark"] .genre-tile{border-color:#2e2c22!important;}
 [data-theme="dark"] .year-stat{background:#1c1a12;}
 [data-theme="dark"] .cf-bar{background:#1c1a12;}
-[data-theme="dark"] .tab-bar{background:#1c1a12;}
+
 [data-theme="dark"] .modal{box-shadow:0 24px 80px rgba(0,0,0,.65);}
 [data-theme="dark"] .table-wrap{border-color:#2e2c22;}
 
@@ -537,7 +534,7 @@ html,body{height:100%;overflow-x:hidden;}
 /* ── Full-height dashboard ── */
 #dashboard{display:flex;flex-direction:column;height:calc(100vh - 0px);}
 .dash-body{flex:1;display:flex;flex-direction:column;padding:8px 16px 0;min-height:0;}
-.tab-content-full{flex:1;min-height:0;overflow:hidden;}
+
 #tab-river,#tab-nexus{height:100%;}
 #river-panel{height:100%;}
 #river-svg,#nexus-svg{height:100%;min-height:460px;}
@@ -607,6 +604,17 @@ html,body{height:100%;overflow-x:hidden;}
       </div>
     </div>
     <div class="sb-divider" id="sb-summary-divider" style="display:none;"></div>
+    <div id="sb-views-section" class="sb-section" style="display:none;">Views</div>
+    <div class="sb-item sb-view-btn active" id="sb-btn-river" onclick="switchTab('river')" data-view="river" style="display:none;cursor:pointer;">
+      <span class="sb-icon">≋</span><span class="sb-label">River</span>
+    </div>
+    <div class="sb-item sb-view-btn" id="sb-btn-nexus" onclick="switchTab('nexus')" data-view="nexus" style="display:none;cursor:pointer;">
+      <span class="sb-icon">🌐</span><span class="sb-label">Nexus</span>
+    </div>
+    <div class="sb-item sb-view-btn" id="sb-btn-songs" onclick="switchTab('songs')" data-view="songs" style="display:none;cursor:pointer;">
+      <span class="sb-icon">🎵</span><span class="sb-label">Songs</span>
+    </div>
+    <div class="sb-divider" id="sb-views-divider" style="display:none;"></div>
     <div class="sb-section">Saved Playlists</div>
     <input type="file" id="art-upload-inp" accept="image/*" style="display:none" onchange="handleArtUpload(event)" />
     <input type="file" id="sb-csv-input" accept=".csv" style="display:none" />
@@ -757,12 +765,8 @@ html,body{height:100%;overflow-x:hidden;}
       <div id="gf-cnt" style="display:none"></div>
       <div id="gnf-cnt" style="display:none"></div>
       <div id="yf-cnt" style="display:none"></div>
-      <div class="tab-bar" style="width:100%;border-radius:0;background:none;padding:0;border-bottom:1px solid var(--border);margin-bottom:0;gap:0;display:flex;">
-        <button class="tab active" onclick="switchTab('river')" style="flex:1;padding:11px 8px;font-size:.78rem;">≋ River</button>
-        <button class="tab" onclick="switchTab('nexus')" style="flex:1;padding:11px 8px;font-size:.78rem;">🌐 Nexus</button>
-        <button class="tab" onclick="switchTab('songs')" style="flex:1;padding:11px 8px;font-size:.78rem;">🎵 Songs</button>
-      </div>
-      <div id="tab-river" class="active" style="padding:0 0 12px;">
+      <!-- views controlled from sidebar nav -->
+      <div id="view-river" style="padding:0 0 12px;">
         <div id="river-panel" style="position:relative;min-height:500px;">
           <canvas id="river-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity .5s;"></canvas>
           <svg id="river-svg" width="100%" viewBox="0 0 900 640" style="display:block;height:calc(100vh - 160px);min-height:500px;cursor:default;" preserveAspectRatio="xMidYMid meet"></svg>
@@ -772,10 +776,10 @@ html,body{height:100%;overflow-x:hidden;}
           </div>
         </div>
       </div>
-      <div id="tab-nexus" style="padding:0 0 12px;">
+      <div id="view-nexus" style="padding:0 0 12px;">
         <svg id="nexus-svg" width="100%" viewBox="0 0 900 620" style="display:block;height:calc(100vh - 120px);min-height:500px;cursor:default;" preserveAspectRatio="xMidYMid meet"></svg>
       </div>
-      <div id="tab-songs">
+      <div id="view-songs">
         <div class="chart-panel songs-panel">
           <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;flex-wrap:wrap;">
             <div class="chart-title" style="margin:0">All Tracks</div>
@@ -2214,7 +2218,7 @@ function highlightPlayingTrack(track){
     if(pb&&pb.getAttribute('onclick')==='spPlayTrack('+idx+')'){
       row.classList.add('now-playing-row');pb.classList.add('playing');
       ['[data-hl="year"]','[data-hl="gender"]','[data-hl="genre"]'].forEach(function(sel){var el=row.querySelector(sel);if(el){el.classList.remove('sp-ping');void el.offsetWidth;el.classList.add('sp-ping');}});
-      if(document.getElementById('tab-songs').classList.contains('active'))row.scrollIntoView({behavior:'smooth',block:'nearest'});
+      if(document.getElementById('view-songs').classList.contains('active'))row.scrollIntoView({behavior:'smooth',block:'nearest'});
     }
   });
   document.querySelectorAll('#gender-bars .gender-row').forEach(function(row){
@@ -2223,8 +2227,8 @@ function highlightPlayingTrack(track){
   document.querySelectorAll('#genre-tiles .genre-tile').forEach(function(tile){var oc=tile.getAttribute('onclick')||'';if(oc.indexOf(track.mainGenre)>=0)tile.classList.add('sp-active-tile');});
   updateYearBarOverlay(track);
   // Update River and Nexus if visible
-  var tabRiver=document.getElementById('tab-river');
-  var tabNexus=document.getElementById('tab-nexus');
+  var tabRiver=document.getElementById('view-river');
+  var tabNexus=document.getElementById('view-nexus');
   if(tabRiver&&tabRiver.classList.contains('active'))renderRiverFlow();
   if(tabNexus&&tabNexus.classList.contains('active'))renderNexusWeb();
 }
@@ -2291,6 +2295,11 @@ function initDashboard(name){
   var wGBtn=document.getElementById('sb-wiki-genre-btn');
   if(wDiv)wDiv.style.display='';
   if(wSec)wSec.style.display='';
+  // Show view switchers
+  ['sb-views-section','sb-btn-river','sb-btn-nexus','sb-btn-songs','sb-views-divider'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.style.display='';
+  });
+  switchTab('river');
   if(wBtn)wBtn.style.display=wikiCount2<allTracks.length?'flex':'none';
   if(wGBtn)wGBtn.style.display=wikiCount2>0?'flex':'none';
   ['welcome-screen','loading-screen'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
@@ -2358,7 +2367,7 @@ function updateAllKPIs(){
   renderGenderBars();renderGenreTiles();renderYearChart();
   populateFilters();applyFilters();
   // Only re-render river/nexus if their tab is currently visible
-  if(document.getElementById('tab-river')&&document.getElementById('tab-river').classList.contains('active'))setTimeout(renderRiverFlow,50);
+  if(document.getElementById('view-river')&&document.getElementById('view-river').classList.contains('active'))setTimeout(renderRiverFlow,50);
   // Refresh highlights after all charts have re-rendered
   setTimeout(refreshHighlights, 500);
   var oc=allTracks.filter(function(t){return t.mainGenre==='Other';}).length;
@@ -3449,13 +3458,14 @@ function renderNexusWeb(){
 var _origHighlight=typeof highlightPlayingTrack==='function'?highlightPlayingTrack:null;
 
 function switchTab(tab){
-  document.querySelectorAll('.tab').forEach(function(b){
-    var map={river:'River',nexus:'Nexus',songs:'Songs'};
-    b.classList.toggle('active',b.textContent.trim().indexOf(map[tab]||tab)>=0);
-  });
-  ['tab-river','tab-nexus','tab-songs'].forEach(function(id){
+  // Show/hide views
+  ['view-river','view-nexus','view-songs'].forEach(function(id){
     var el=document.getElementById(id);
-    if(el)el.classList.toggle('active',id==='tab-'+tab);
+    if(el)el.classList.toggle('active',id==='view-'+tab);
+  });
+  // Highlight sidebar buttons
+  document.querySelectorAll('.sb-view-btn').forEach(function(b){
+    b.classList.toggle('active',b.getAttribute('data-view')===tab);
   });
   if(tab==='songs'){if(filteredTracks.length===0&&allTracks.length>0)filteredTracks=allTracks.slice();renderTable();}
   if(tab==='river'){setTimeout(renderRiverFlow,30);}
