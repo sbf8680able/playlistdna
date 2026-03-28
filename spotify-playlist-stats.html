@@ -105,7 +105,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:var(--mon
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .tm-gname{font-size:1rem;font-weight:700;min-width:160px;position:relative;transition:color .12s;padding:4px 0}
 .tm-gcount{font-family:var(--syne);font-size:2rem;font-weight:700;color:var(--tx2);line-height:1;position:relative;min-width:70px}
-.tm-gpct{font-size:.68rem;color:var(--mu);margin-left:auto;position:relative;padding-right:8px}
+.tm-gpct{font-size:.72rem;color:var(--tx2);margin-left:auto;position:relative;padding-right:12px;font-weight:500}
 /* Year pills */
 .tm-year-strip{display:flex;flex-wrap:wrap;gap:6px}
 .tm-ypill{font-size:.72rem;padding:6px 14px;border:1px solid var(--bor);color:var(--tx2);cursor:pointer;border-radius:4px;letter-spacing:.05em;transition:all .12s;background:none;font-family:var(--mono)}
@@ -471,16 +471,16 @@ function goView(id){
     if(b)b.classList.toggle('on',v===id);
   });
   // Init canvases if first visit
-  if(id==='constellation'&&!_conInit){_conInit=true;setTimeout(initCon,50);}
-  if(id==='observatory'&&!_obsInit){_obsInit=true;setTimeout(initObs,50);}
-  // Resize canvases
-  if(id==='constellation')resizeCon();
-  if(id==='observatory')resizeObs();
-  // Re-render as needed
+  if(id==='constellation'){
+    if(!_conInit){_conInit=true;resizeCon();initCon();}  // initCon calls drawCon itself
+    else{resizeCon();drawCon();}
+  }
+  if(id==='observatory'){
+    if(!_obsInit){_obsInit=true;resizeObs();initObs();}
+    else{resizeObs();drawObs();}
+  }
   if(id==='terminal')renderTerminal();
   if(id==='songs')renderSongs();
-  if(id==='constellation')drawCon();
-  if(id==='observatory')drawObs();
 }
 
 // =======================================================
@@ -686,17 +686,37 @@ function renderGenres(){
     var g=entry[0],n=entry[1];
     var col=gColor(g);
     var isNow=spCurrentTrack&&spCurrentTrack.mainGenre===g;
+    var pct=Math.round(n/total*100);
     var row=document.createElement('div');
     row.className='tm-genre-row'+(isNow?' now-playing':'');
-    row.dataset.genre=g;
-    var pct=Math.round(n/total*100);
-    row.innerHTML='<div class="tm-gbg" style="width:'+Math.round(n/mx*100)+'%;background:'+col+'"></div>'
-      +'<div class="tm-gname" style="color:'+col+'">'+(g||'Other')+'</div>'
-      +'<div class="tm-gcount">'+n+'</div>'
-      +'<div class="tm-gpct">'+(pct)+'%</div>'
-      +'<button class="tm-gplay" data-genre="'+esc(g)+'">Play</button>';
-    row.querySelector('.tm-gplay').addEventListener('click',function(e){e.stopPropagation();spPlayGenre(g);});
-    row.addEventListener('click',function(){openTrackModal(g,'genre',col);});
+    var bg=document.createElement('div');
+    bg.className='tm-gbg';
+    bg.style.cssText='width:'+Math.round(n/mx*100)+'%;background:'+col;
+    var playBtn=document.createElement('button');
+    playBtn.className='tm-gplay-btn';
+    playBtn.title='Play '+g;
+    playBtn.innerHTML=isNow?'&#9646;':'&#9654;';
+    playBtn.addEventListener('click',function(e){e.stopPropagation();spPlayGenre(g);});
+    var name=document.createElement('div');
+    name.className='tm-gname';
+    name.style.color=col;
+    name.textContent=g||'Other';
+    var cnt=document.createElement('div');
+    cnt.className='tm-gcount';
+    cnt.style.color=col;
+    cnt.textContent=n;
+    var pctEl=document.createElement('div');
+    pctEl.className='tm-gpct';
+    pctEl.textContent=pct+'%';
+    row.appendChild(bg);
+    row.appendChild(playBtn);
+    row.appendChild(name);
+    row.appendChild(cnt);
+    row.appendChild(pctEl);
+    row.addEventListener('click',function(e){
+      if(e.target===playBtn||playBtn.contains(e.target))return;
+      openTrackModal(g,'mainGenre',col);
+    });
     gc.appendChild(row);
   });
 }
@@ -815,7 +835,7 @@ function openTrackModal(value,field,col){
   var pool=tracks.filter(function(t){return String(t[field])===String(value);});
   if(!pool.length)return;
   _modalPool=pool;
-  var label=field==='genre'?value:field==='gender'?(value.charAt(0).toUpperCase()+value.slice(1))+' Artists':value;
+  var label=field==='mainGenre'?value:field==='gender'?(value.charAt(0).toUpperCase()+value.slice(1))+' Artists':value;
   setText('modal-tracks-title',label+' -- '+pool.length+' tracks');
   var body=document.getElementById('modal-tracks-body');
   body.innerHTML='';
